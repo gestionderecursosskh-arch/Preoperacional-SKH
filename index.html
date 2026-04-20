@@ -1341,7 +1341,7 @@ function setTodayDefaults() {
 
 // ── Construir URL de vista con los datos del formulario codificados ──
 function buildViewUrl(data) {
-  // Solo guardar campos de texto (sin archivos ni firma — son muy pesados)
+  // Solo guardar campos de texto (sin archivos ni firma original)
   const snapshot = {};
   const keys = [
     'fecha','horaSalida','nombreConductor','placa','numLicencia','marcaModelo',
@@ -1358,10 +1358,31 @@ function buildViewUrl(data) {
     'cedulaConductor','fechaFirmaConductor','horaFirmaConductor'
   ];
   keys.forEach(k => { if (data[k] !== undefined && data[k] !== '') snapshot[k] = data[k]; });
-  snapshot._waypoints = data.waypoints || [];
+  snapshot._waypoints  = data.waypoints || [];
   snapshot._folderName = data.folderName || '';
+
+  // Incluir versión comprimida de la firma SOLO para la vista
+  // La firma en Drive NO se toca — esta es una copia reducida exclusiva para el link
+  if (data.sigConductor) {
+    try {
+      const img = new Image();
+      img.src = data.sigConductor;
+      const c = document.createElement('canvas');
+      // Escalar a máximo 300×90px manteniendo proporción
+      const MAX_W = 300, MAX_H = 90;
+      const scale = Math.min(MAX_W / (img.width || 400), MAX_H / (img.height || 150));
+      c.width  = Math.round((img.width  || 400) * scale);
+      c.height = Math.round((img.height || 150) * scale);
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      // JPEG al 40% — suficiente para ver la firma, pesa ~3-5 KB en base64
+      snapshot._sig = c.toDataURL('image/jpeg', 0.40);
+    } catch(e) { /* si falla, no incluir firma */ }
+  }
+
   try {
-    // Usar la URL configurada, o la URL actual si ya está publicado en GitHub Pages
     const base = CONFIG.HOSTED_URL ||
       (window.location.href.startsWith('http') ? window.location.href.split('?')[0] : '');
     if (!base) return '';
@@ -1457,6 +1478,61 @@ function initViewMode(encoded) {
       html += '</table></div>';
       container.innerHTML += html;
     });
+
+    // ── FIRMA DEL CONDUCTOR ──────────────────────────────────────────
+    // Usar firma comprimida del snapshot (viaja en la URL, visible desde cualquier dispositivo)
+    // La firma original en Drive NO se afecta
+    const sigData = data._sig || null;
+
+    let sigHtml = `<div style="margin-bottom:16px">
+      <div style="background:#0F2140;color:#fff;padding:8px 12px;border-radius:8px 8px 0 0;font-size:12px;font-weight:700;letter-spacing:0.5px">✍️ FIRMA DEL CONDUCTOR</div>
+      <div style="border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;padding:16px;background:#fafafa">`;
+
+    if (sigData) {
+      // Firma visible desde cualquier dispositivo
+      sigHtml += `
+        <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Firma digital</div>
+            <div style="border:1.5px solid #e0e0e0;border-radius:6px;background:#fff;padding:6px;display:inline-block">
+              <img src="${sigData}" style="max-width:280px;max-height:100px;display:block">
+            </div>
+            <div style="margin-top:6px;font-size:10px;color:#999;border-top:1px solid #ccc;padding-top:4px;max-width:280px">
+              ${data.nombreConductor || ''} · CC ${data.cedulaConductor || ''}
+            </div>
+          </div>
+          <div style="flex:0 0 auto;font-size:11px;color:#555">
+            <div><strong>Fecha:</strong> ${data.fechaFirmaConductor || ''}</div>
+            <div><strong>Hora:</strong> ${data.horaFirmaConductor || ''}</div>
+            <div style="margin-top:8px;font-size:10px;color:#1a7a4a">✅ Firma verificada</div>
+          </div>
+        </div>`;
+    } else {
+      // Sin firma en el snapshot
+      sigHtml += `
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+          <div style="border:2px solid #1a7a4a;border-radius:8px;padding:12px 20px;text-align:center;color:#1a7a4a;min-width:160px">
+            <div style="font-size:22px;margin-bottom:4px">✅</div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.5px">FIRMADO DIGITALMENTE</div>
+            <div style="font-size:10px;margin-top:2px">${data.fechaFirmaConductor || ''} ${data.horaFirmaConductor || ''}</div>
+          </div>
+          <div style="font-size:12px;color:#555">
+            <div><strong>${data.nombreConductor || ''}</strong></div>
+            <div>CC ${data.cedulaConductor || ''}</div>
+            <div style="margin-top:4px;font-size:10px;color:#999">La firma original se encuentra en Google Drive.</div>
+          </div>
+        </div>`;
+    }
+
+    sigHtml += `
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e0e0e0;font-size:10px;color:#aaa;font-style:italic">
+          Bajo la gravedad de juramento declaro que la información consignada es verídica.
+        </div>
+      </div>
+    </div>`;
+
+    container.innerHTML += sigHtml;
+    // ────────────────────────────────────────────────────────────────
 
     // Carpeta Drive
     if (data._folderName) {
