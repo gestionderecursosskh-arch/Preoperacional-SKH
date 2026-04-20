@@ -1365,7 +1365,6 @@ async function buildViewUrl(data) {
   // La firma en Drive NO se toca — esta es una copia reducida exclusiva para el link
   if (data.sigConductor) {
     try {
-      // Esperar a que la imagen cargue antes de dibujar en canvas
       const sigImg = await new Promise((res, rej) => {
         const img = new Image();
         img.onload  = () => res(img);
@@ -1376,18 +1375,17 @@ async function buildViewUrl(data) {
       c.width   = 300;
       c.height  = 90;
       const ctx = c.getContext('2d');
+      // Fondo blanco primero (la firma PNG tiene fondo transparente)
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, 300, 90);
-      // Mantener proporción con padding
-      const scale = Math.min(300 / sigImg.width, 90 / sigImg.height);
+      // Dibujar firma manteniendo proporción, centrada
+      const scale = Math.min(290 / sigImg.width, 80 / sigImg.height);
       const w = sigImg.width  * scale;
       const h = sigImg.height * scale;
-      const x = (300 - w) / 2;
-      const y = (90  - h) / 2;
-      ctx.drawImage(sigImg, x, y, w, h);
-      // JPEG al 45% — suficiente para ver la firma, ~3-5 KB en base64
-      snapshot._sig = c.toDataURL('image/jpeg', 0.45);
-    } catch(e) { /* si falla, continuar sin firma */ }
+      ctx.drawImage(sigImg, (300 - w) / 2, (90 - h) / 2, w, h);
+      // PNG para preservar los trazos sobre blanco (no JPEG que distorsiona trazos finos)
+      snapshot._sig = c.toDataURL('image/png');
+    } catch(e) { /* continuar sin firma */ }
   }
 
   try {
