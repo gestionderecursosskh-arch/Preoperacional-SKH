@@ -2,6 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<!-- Ocultar body inmediatamente si es modo vista — evita flash del formulario -->
+<script>if(window.location.hash.startsWith('#d='))document.documentElement.style.visibility='hidden';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>F-SO-005 · Preoperacional Vehículos · SKANHAWK</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -1534,7 +1536,7 @@ async function initViewMode(encoded) {
 
     document.body.innerHTML = '';
     document.body.appendChild(container);
-    document.body.style.visibility = 'visible';
+    document.documentElement.style.visibility = 'visible';
 
     window._viewModeData = data;
     window._viewMode = true;
@@ -1542,7 +1544,7 @@ async function initViewMode(encoded) {
   } catch(e) {
     console.error('Error cargando vista:', e);
     document.body.innerHTML = '<div style="padding:40px;text-align:center;font-family:sans-serif;color:#c0392b">⚠️ Link inválido o expirado</div>';
-    document.body.style.visibility = 'visible';
+    document.documentElement.style.visibility = 'visible';
   }
 }
 
