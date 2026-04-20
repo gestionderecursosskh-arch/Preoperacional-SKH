@@ -1624,11 +1624,10 @@ function initMap() {
     mapEl.style.background = '';
     map = L.map('routeMap').setView([4.7109, -74.0721], 11);
     window.map = map; // expose for PDF capture
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
-      crossOrigin: true,
-      referrerPolicy: 'no-referrer'
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
     }).addTo(map);
     map.on('click', e => {
       const lat = e.latlng.lat, lng = e.latlng.lng;
