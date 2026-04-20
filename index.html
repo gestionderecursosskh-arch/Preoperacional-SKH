@@ -1363,29 +1363,9 @@ async function buildViewUrl(data) {
 
   // Incluir versión comprimida de la firma SOLO para la vista
   // La firma en Drive NO se toca — esta es una copia reducida exclusiva para el link
+  // Incluir firma directamente — PNG de trazos pesa ~5-15KB, OK para la URL
   if (data.sigConductor) {
-    try {
-      const sigImg = await new Promise((res, rej) => {
-        const img = new Image();
-        img.onload  = () => res(img);
-        img.onerror = () => rej();
-        img.src = data.sigConductor;
-      });
-      const c   = document.createElement('canvas');
-      c.width   = 300;
-      c.height  = 90;
-      const ctx = c.getContext('2d');
-      // Fondo blanco primero (la firma PNG tiene fondo transparente)
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, 300, 90);
-      // Dibujar firma manteniendo proporción, centrada
-      const scale = Math.min(290 / sigImg.width, 80 / sigImg.height);
-      const w = sigImg.width  * scale;
-      const h = sigImg.height * scale;
-      ctx.drawImage(sigImg, (300 - w) / 2, (90 - h) / 2, w, h);
-      // PNG para preservar los trazos sobre blanco (no JPEG que distorsiona trazos finos)
-      snapshot._sig = c.toDataURL('image/png');
-    } catch(e) { /* continuar sin firma */ }
+    snapshot._sig = data.sigConductor;
   }
 
   try {
@@ -1500,8 +1480,8 @@ function initViewMode(encoded) {
         <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
           <div style="flex:1;min-width:200px">
             <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Firma digital</div>
-            <div style="border:1.5px solid #e0e0e0;border-radius:6px;background:#fff;padding:6px;display:inline-block">
-              <img src="${sigData}" style="max-width:280px;max-height:100px;display:block">
+            <div style="border:1.5px solid #e0e0e0;border-radius:6px;background:#fff;padding:8px;display:inline-block;min-width:200px;min-height:60px">
+              <img src="${sigData}" style="max-width:280px;max-height:100px;display:block;background:#fff">
             </div>
             <div style="margin-top:6px;font-size:10px;color:#999;border-top:1px solid #ccc;padding-top:4px;max-width:280px">
               ${data.nombreConductor || ''} · CC ${data.cedulaConductor || ''}
@@ -2493,26 +2473,29 @@ async function uploadFilesInBackground(folderName) {
   if (files.length === 0) return;
 
   showUploadOverlay();
-  setUploadProgress(20, 'Subiendo ' + files.length + ' archivos a Drive...', 'Preparando...');
+  setUploadProgress(15, 'Preparando archivos...', 'Convirtiendo ' + files.length + ' archivos');
 
-  // Esperar 2 segundos para que Apps Script cree la carpeta antes de subir archivos
-  // Evita la condición de carrera que generaba múltiples carpetas
-  await new Promise(r => setTimeout(r, 2000));
-
-  // Subida SECUENCIAL — garantiza que cada archivo va a la carpeta correcta
-  for (let i = 0; i < files.length; i++) {
-    const { label, file } = files[i];
+  // Paso 1: convertir TODOS los archivos a base64 en paralelo (rápido, sin red)
+  const prepared = await Promise.all(files.map(async ({ label, file }) => {
     const ext = file.name.split('.').pop() || 'bin';
-    const key = label + '.' + ext;
+    const b64 = await fileToBase64(file);
+    return { label, file, ext, key: label + '.' + ext, b64 };
+  }));
 
+  setUploadProgress(25, 'Archivos listos. Subiendo a Drive...', 'Esperando carpeta...');
+
+  // Esperar 1.5s para que Apps Script cree la carpeta (reducido de 2s)
+  await new Promise(r => setTimeout(r, 1500));
+
+  // Paso 2: subir secuencialmente (garantiza una sola carpeta)
+  for (let i = 0; i < prepared.length; i++) {
+    const { key, file, b64 } = prepared[i];
     setUploadProgress(
-      Math.round(((i) / files.length) * 75) + 20,
-      'Guardando en Drive... ' + (i+1) + '/' + files.length,
+      Math.round(((i) / prepared.length) * 70) + 25,
+      'Guardando en Drive... ' + (i+1) + '/' + prepared.length,
       key
     );
-
     try {
-      const b64 = await fileToBase64(file);
       await fetch(url, {
         method: 'POST',
         mode: 'no-cors',
@@ -2525,7 +2508,7 @@ async function uploadFilesInBackground(folderName) {
           fileData: b64.data
         })
       });
-    } catch(e) { /* continua con el siguiente */ }
+    } catch(e) { /* continúa con el siguiente */ }
   }
 
   setUploadProgress(100, '¡Todo guardado correctamente!', 'Completado ✓');
