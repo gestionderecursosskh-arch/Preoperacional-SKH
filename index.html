@@ -898,6 +898,7 @@
         <!-- RUTA CON MAPA -->
         <div style="margin-top:14px">
           <label>Ruta / Destino <span class="required">*</span></label>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;margin-bottom:2px">Agregue todos los destinos que tiene dentro de su ruta para el día</div>
           <div style="margin-top:8px">
             <div class="map-container">
               <div id="routeMap" style="background:linear-gradient(135deg,#e8edf5,#dde4f0); display:flex; align-items:center; justify-content:center; font-size:13px; color:#6b6860; flex-direction:column; gap:8px;">
@@ -907,7 +908,6 @@
             </div>
             <div class="map-controls">
               <button class="map-btn primary" onclick="addWaypoint()">＋ Agregar punto</button>
-              <button class="map-btn" onclick="useCurrentLocation()">📍 Mi ubicación</button>
               <button class="map-btn danger" onclick="clearRoute()">✕ Limpiar ruta</button>
             </div>
             <div class="waypoints-list" id="waypointsList"></div>
@@ -1162,7 +1162,7 @@
           <div>
             <label style="display:block; margin-bottom:6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted)">🔵 Fotografía Delantera <span style="color:#e8620a">*</span></label>
             <div class="upload-zone" id="zone_front">
-              <input type="file" id="photo_front" accept="image/*" capture="environment" onchange="handleVehiclePhoto(this,'front','zone_front','preview_front')">
+              <input type="file" id="photo_front" accept="image/*" onchange="handleVehiclePhoto(this,'front','zone_front','preview_front')">
               <div class="upload-icon" id="icon_front" style="font-size:32px;margin-bottom:6px">📷</div>
               <div class="upload-text" id="text_front"><strong>Toca para tomar foto o seleccionar</strong><br>JPG, PNG</div>
               <img id="preview_front" style="display:none; width:100%; height:100px; object-fit:cover; border-radius:4px; margin-top:6px">
@@ -1173,7 +1173,7 @@
           <div>
             <label style="display:block; margin-bottom:6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted)">🔴 Fotografía Trasera <span style="color:#e8620a">*</span></label>
             <div class="upload-zone" id="zone_back">
-              <input type="file" id="photo_back" accept="image/*" capture="environment" onchange="handleVehiclePhoto(this,'back','zone_back','preview_back')">
+              <input type="file" id="photo_back" accept="image/*" onchange="handleVehiclePhoto(this,'back','zone_back','preview_back')">
               <div class="upload-icon" id="icon_back" style="font-size:32px;margin-bottom:6px">📷</div>
               <div class="upload-text" id="text_back"><strong>Toca para tomar foto o seleccionar</strong><br>JPG, PNG</div>
               <img id="preview_back" style="display:none; width:100%; height:100px; object-fit:cover; border-radius:4px; margin-top:6px">
@@ -1184,7 +1184,7 @@
           <div>
             <label style="display:block; margin-bottom:6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted)">🟡 Lateral Izquierdo <span style="color:#e8620a">*</span></label>
             <div class="upload-zone" id="zone_left">
-              <input type="file" id="photo_left" accept="image/*" capture="environment" onchange="handleVehiclePhoto(this,'left','zone_left','preview_left')">
+              <input type="file" id="photo_left" accept="image/*" onchange="handleVehiclePhoto(this,'left','zone_left','preview_left')">
               <div class="upload-icon" id="icon_left">📷</div>
               <div class="upload-text" id="text_left"><strong>Toca para tomar foto o seleccionar</strong><br>JPG, PNG</div>
               <img id="preview_left" style="display:none; width:100%; height:100px; object-fit:cover; border-radius:4px; margin-top:6px">
@@ -1195,7 +1195,7 @@
           <div>
             <label style="display:block; margin-bottom:6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted)">🟢 Lateral Derecho <span style="color:#e8620a">*</span></label>
             <div class="upload-zone" id="zone_right">
-              <input type="file" id="photo_right" accept="image/*" capture="environment" onchange="handleVehiclePhoto(this,'right','zone_right','preview_right')">
+              <input type="file" id="photo_right" accept="image/*" onchange="handleVehiclePhoto(this,'right','zone_right','preview_right')">
               <div class="upload-icon" id="icon_right">📷</div>
               <div class="upload-text" id="text_right"><strong>Toca para tomar foto o seleccionar</strong><br>JPG, PNG</div>
               <img id="preview_right" style="display:none; width:100%; height:100px; object-fit:cover; border-radius:4px; margin-top:6px">
@@ -1683,21 +1683,19 @@ function addWaypoint() {
 }
 
 function useCurrentLocation() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(pos => {
-      const lat = pos.coords.latitude, lng = pos.coords.longitude;
-      fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&accept-language=es')
-        .then(r => r.json())
-        .then(data => {
-          const label = data.address
-            ? (data.address.road||data.address.pedestrian||data.address.suburb||data.address.neighbourhood||data.address.town||data.address.city||'Mi ubicacion')
-            : 'Mi ubicacion actual';
-          addWaypointLatLng(lat, lng, label.trim());
-        })
-        .catch(() => addWaypointLatLng(lat, lng, 'Mi ubicacion actual'));
-      showToast('📍 Ubicación agregada', 'success');
-    }, () => showToast('No se pudo obtener la ubicación', 'error'));
-  }
+  requestGeoPermission(pos => {
+    const lat = pos.coords.latitude, lng = pos.coords.longitude;
+    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&accept-language=es')
+      .then(r => r.json())
+      .then(data => {
+        const label = data.address
+          ? (data.address.road||data.address.pedestrian||data.address.suburb||data.address.neighbourhood||data.address.town||data.address.city||'Mi ubicacion')
+          : 'Mi ubicacion actual';
+        addWaypointLatLng(lat, lng, label.trim());
+      })
+      .catch(() => addWaypointLatLng(lat, lng, 'Mi ubicacion actual'));
+    showToast('📍 Ubicación agregada', 'success');
+  });
 }
 
 function clearRoute() {
@@ -1758,14 +1756,57 @@ function renderWaypoints() {
 // ═══════════════════════════════════════════
 // GEO
 // ═══════════════════════════════════════════
+function requestGeoPermission(onSuccess, onError) {
+  if (!navigator.geolocation) {
+    showToast('Tu dispositivo no soporta geolocalización', 'error');
+    if (onError) onError('not_supported');
+    return;
+  }
+  // Detectar iOS para mensaje apropiado
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (isIOS) {
+    showToast('📍 Solicitando permiso de ubicación...', '');
+  } else {
+    showToast('📍 Obteniendo ubicación...', '');
+  }
+
+  const opts = {
+    enableHighAccuracy: true,   // GPS real en iOS y Android
+    timeout: 15000,             // 15 segundos de espera
+    maximumAge: 0               // No usar caché
+  };
+
+  navigator.geolocation.getCurrentPosition(
+    pos => { if (onSuccess) onSuccess(pos); },
+    err => {
+      let msg = 'No se pudo obtener la ubicación';
+      if (err.code === 1) {
+        // iOS: ir a Ajustes > Privacidad > Localización
+        // Android: Ajustes > Aplicaciones > Permisos
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS) {
+          msg = 'Permiso denegado. Ve a Ajustes → Privacidad → Localización y activa el acceso para este navegador.';
+        } else {
+          msg = 'Permiso denegado. Activa la ubicación en Ajustes de tu dispositivo.';
+        }
+      } else if (err.code === 2) {
+        msg = 'No se pudo determinar la ubicación. Verifica que el GPS esté activo.';
+      } else if (err.code === 3) {
+        msg = 'Tiempo de espera agotado. Intenta de nuevo en un lugar con mejor señal GPS.';
+      }
+      showToast(msg, 'error');
+      if (onError) onError(err);
+    },
+    opts
+  );
+}
+
 function captureGeo() {
-  if (!navigator.geolocation) { showToast('Geolocalización no disponible', 'error'); return; }
-  showToast('📍 Obteniendo ubicación...', '');
-  navigator.geolocation.getCurrentPosition(pos => {
+  requestGeoPermission(pos => {
     const { latitude: lat, longitude: lng, accuracy } = pos.coords;
     document.getElementById('geoField').value = `${lat.toFixed(6)}, ${lng.toFixed(6)} (±${Math.round(accuracy)}m)`;
     showToast('📍 Ubicación capturada', 'success');
-  }, () => showToast('No se pudo obtener la ubicación', 'error'));
+  });
 }
 
 // ═══════════════════════════════════════════
@@ -1777,31 +1818,34 @@ function initSignatures() {
 }
 
 function initSig(id) {
-  // Called when user navigates to signature section - just resize if already setup
+  // Llamado al navegar a la sección de firma
   const canvas = document.getElementById(id);
   if (!canvas) return;
   if (canvas._ready) {
     _resizeSig(canvas);
   } else {
-    _setupSig(id);
+    // Defer para que el canvas sea visible y tenga dimensiones correctas
+    requestAnimationFrame(() => setTimeout(() => _setupSig(id), 100));
   }
 }
 
 function _resizeSig(canvas) {
   const w = canvas.offsetWidth || 400;
-  const h = canvas.offsetHeight || 140;
-  // Only resize if dimensions changed
+  const h = 140;
   if (canvas.width === w && canvas.height === h) return;
   const ctx = canvas.getContext('2d');
-  // Save drawing
-  const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  // Save drawing as dataURL before resize (getImageData doesn't survive dimension change)
+  const dataUrl = canvas.toDataURL();
   canvas.width = w;
   canvas.height = h;
-  ctx.putImageData(img, 0, 0);
   ctx.strokeStyle = '#1a1916';
   ctx.lineWidth = 2;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
+  // Restore drawing
+  const img = new Image();
+  img.onload = () => ctx.drawImage(img, 0, 0);
+  img.src = dataUrl;
 }
 
 function _setupSig(id) {
@@ -1809,226 +1853,57 @@ function _setupSig(id) {
   if (!canvas || canvas._ready) return;
   canvas._ready = true;
 
-  const w = canvas.offsetWidth || 400;
-  const h = canvas.offsetHeight || 140;
-  canvas.width = w;
-  canvas.height = h;
+  // Fijar altura explícita para evitar desbordamiento en responsive
+  canvas.style.height = '140px';
+  const w = canvas.offsetWidth || canvas.parentElement?.offsetWidth || 400;
+  canvas.width  = w;
+  canvas.height = 140;
 
   const ctx = canvas.getContext('2d');
   ctx.strokeStyle = '#1a1916';
-  ctx.lineWidth = 2;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  ctx.lineWidth   = 2.5;
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
 
   let drawing = false;
 
-  canvas.addEventListener('mousedown', e => {
-    e.preventDefault();
-    drawing = true;
-    ctx.beginPath();
-    ctx.moveTo(e.offsetX, e.offsetY);
-  });
-
-  canvas.addEventListener('mousemove', e => {
-    if (!drawing) return;
-    ctx.lineTo(e.offsetX, e.offsetY);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(e.offsetX, e.offsetY);
-  });
-
-  canvas.addEventListener('mouseup',    () => { drawing = false; });
-  canvas.addEventListener('mouseleave', () => { drawing = false; });
-
-  canvas.addEventListener('touchstart', e => {
-    e.preventDefault();
-    drawing = true;
-    const rect = canvas.getBoundingClientRect();
-    ctx.beginPath();
-    ctx.moveTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-  }, { passive: false });
-
-  canvas.addEventListener('touchmove', e => {
-    e.preventDefault();
-    if (!drawing) return;
-    const rect = canvas.getBoundingClientRect();
-    ctx.lineTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-  }, { passive: false });
-
-  canvas.addEventListener('touchend', () => { drawing = false; });
-}
-
-function initSig(id) {
-  const canvas = document.getElementById(id);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let drawing = false;
-
-  function setSize() {
-    canvas.width  = canvas.offsetWidth  || 400;
-    canvas.height = canvas.offsetHeight || 140;
-    ctx.strokeStyle = '#1a1916';
-    ctx.lineWidth   = 2;
-    ctx.lineCap     = 'round';
-    ctx.lineJoin    = 'round';
-  }
-  setSize();
-  window.addEventListener('resize', setSize);
-
-  // Mouse: offsetX/offsetY are already relative to canvas — no rect math needed
-  canvas.addEventListener('mousedown', e => {
-    e.preventDefault();
-    drawing = true;
-    ctx.beginPath();
-    ctx.moveTo(e.offsetX, e.offsetY);
-  });
-  canvas.addEventListener('mousemove', e => {
-    if (!drawing) return;
-    ctx.lineTo(e.offsetX, e.offsetY);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(e.offsetX, e.offsetY);
-  });
-  canvas.addEventListener('mouseup',    () => { drawing = false; });
-  canvas.addEventListener('mouseleave', () => { drawing = false; });
-
-  // Touch: use getBoundingClientRect + scrollX/scrollY
-  function getTouchXY(e) {
+  // Coordenadas correctas para iOS/Android (getBoundingClientRect + scroll)
+  function getXY(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width  / rect.width;
     const scaleY = canvas.height / rect.height;
-    return {
-      x: (e.touches[0].clientX - rect.left) * scaleX,
-      y: (e.touches[0].clientY - rect.top)  * scaleY
-    };
-  }
-  canvas.addEventListener('touchstart', e => {
-    e.preventDefault();
-    drawing = true;
-    const p = getTouchXY(e);
-    ctx.beginPath();
-    ctx.moveTo(p.x, p.y);
-  }, { passive: false });
-  canvas.addEventListener('touchmove', e => {
-    e.preventDefault();
-    if (!drawing) return;
-    const p = getTouchXY(e);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(p.x, p.y);
-  }, { passive: false });
-  canvas.addEventListener('touchend', () => { drawing = false; });
-}
-
-function initSig(id) {
-  const canvas = document.getElementById(id);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let drawing = false;
-
-  // Set canvas internal size = exact CSS display size (no DPR scaling)
-  function setSize() {
-    const w = canvas.clientWidth || 400;
-    const h = canvas.clientHeight || 140;
-    canvas.width = w;
-    canvas.height = h;
-    ctx.strokeStyle = '#1a1916';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-  }
-  setSize();
-  window.addEventListener('resize', setSize);
-
-  // Coordinates relative to canvas top-left corner
-  function getXY(e) {
-    const rect = canvas.getBoundingClientRect();
     if (e.touches) {
       return {
-        x: (e.touches[0].clientX - rect.left) * (canvas.width / rect.width),
-        y: (e.touches[0].clientY - rect.top)  * (canvas.height / rect.height)
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top)  * scaleY
       };
     }
     return {
-      x: (e.clientX - rect.left) * (canvas.width / rect.width),
-      y: (e.clientY - rect.top)  * (canvas.height / rect.height)
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top)  * scaleY
     };
   }
 
-  canvas.addEventListener('mousedown',  e => { e.preventDefault(); drawing = true;  const p = getXY(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-  canvas.addEventListener('mousemove',  e => { e.preventDefault(); if (!drawing) return; const p = getXY(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
-  canvas.addEventListener('mouseup',    e => { e.preventDefault(); drawing = false; });
-  canvas.addEventListener('mouseleave', () => { drawing = false; });
-  canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true;  const p = getXY(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
-  canvas.addEventListener('touchmove',  e => { e.preventDefault(); if (!drawing) return; const p = getXY(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }, { passive: false });
-  canvas.addEventListener('touchend',   () => { drawing = false; });
-}
-
-function initSig(id) {
-  const canvas = document.getElementById(id);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let drawing = false;
-
-  function setSize() {
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.offsetWidth || canvas.parentElement.offsetWidth || 400;
-    const h = 140;
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-    canvas.style.width = w + 'px';
-    canvas.style.height = h + 'px';
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.scale(dpr, dpr);
-    ctx.strokeStyle = '#1a1916';
-    ctx.lineWidth = 2.5;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-  }
-  setSize();
-  window.addEventListener('resize', setSize);
-
-  function getXY(e) {
-    const rect = canvas.getBoundingClientRect();
-    if (e.touches) {
-      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
-    }
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  }
-
   canvas.addEventListener('mousedown', e => {
-    e.preventDefault();
-    drawing = true;
-    const p = getXY(e);
-    ctx.beginPath();
-    ctx.moveTo(p.x, p.y);
+    e.preventDefault(); drawing = true;
+    const p = getXY(e); ctx.beginPath(); ctx.moveTo(p.x, p.y);
   });
   canvas.addEventListener('mousemove', e => {
-    e.preventDefault();
     if (!drawing) return;
-    const p = getXY(e);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
+    const p = getXY(e); ctx.lineTo(p.x, p.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(p.x, p.y);
   });
-  canvas.addEventListener('mouseup', e => { e.preventDefault(); drawing = false; });
+  canvas.addEventListener('mouseup',    () => { drawing = false; });
   canvas.addEventListener('mouseleave', () => { drawing = false; });
+
   canvas.addEventListener('touchstart', e => {
-    e.preventDefault();
-    drawing = true;
-    const p = getXY(e);
-    ctx.beginPath();
-    ctx.moveTo(p.x, p.y);
+    e.preventDefault(); drawing = true;
+    const p = getXY(e); ctx.beginPath(); ctx.moveTo(p.x, p.y);
   }, { passive: false });
   canvas.addEventListener('touchmove', e => {
-    e.preventDefault();
-    if (!drawing) return;
-    const p = getXY(e);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
+    e.preventDefault(); if (!drawing) return;
+    const p = getXY(e); ctx.lineTo(p.x, p.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(p.x, p.y);
   }, { passive: false });
   canvas.addEventListener('touchend', () => { drawing = false; });
 }
