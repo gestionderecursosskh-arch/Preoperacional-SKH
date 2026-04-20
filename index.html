@@ -1306,14 +1306,14 @@ let formData = {};
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // ── MODO VISTA: si la URL tiene #d=... cargar datos y mostrar solo lectura
   // Usamos hash (#) en lugar de query (?) — el hash nunca se envía al servidor,
   // por lo que no hay límite de tamaño de URL (resuelve error "URI Too Long")
   const hash = window.location.hash;
   const viewData = hash.startsWith('#d=') ? hash.slice(3) : null;
   if (viewData) {
-    initViewMode(viewData);
+    await initViewMode(viewData);
     return; // no inicializar formulario editable
   }
 
