@@ -1340,7 +1340,7 @@ function setTodayDefaults() {
 }
 
 // ── Construir URL de vista con los datos del formulario codificados ──
-function buildViewUrl(data) {
+async function buildViewUrl(data) {
   // Solo guardar campos de texto (sin archivos ni firma original)
   const snapshot = {};
   const keys = [
@@ -1365,21 +1365,29 @@ function buildViewUrl(data) {
   // La firma en Drive NO se toca — esta es una copia reducida exclusiva para el link
   if (data.sigConductor) {
     try {
-      const img = new Image();
-      img.src = data.sigConductor;
-      const c = document.createElement('canvas');
-      // Escalar a máximo 300×90px manteniendo proporción
-      const MAX_W = 300, MAX_H = 90;
-      const scale = Math.min(MAX_W / (img.width || 400), MAX_H / (img.height || 150));
-      c.width  = Math.round((img.width  || 400) * scale);
-      c.height = Math.round((img.height || 150) * scale);
+      // Esperar a que la imagen cargue antes de dibujar en canvas
+      const sigImg = await new Promise((res, rej) => {
+        const img = new Image();
+        img.onload  = () => res(img);
+        img.onerror = () => rej();
+        img.src = data.sigConductor;
+      });
+      const c   = document.createElement('canvas');
+      c.width   = 300;
+      c.height  = 90;
       const ctx = c.getContext('2d');
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, c.width, c.height);
-      ctx.drawImage(img, 0, 0, c.width, c.height);
-      // JPEG al 40% — suficiente para ver la firma, pesa ~3-5 KB en base64
-      snapshot._sig = c.toDataURL('image/jpeg', 0.40);
-    } catch(e) { /* si falla, no incluir firma */ }
+      ctx.fillRect(0, 0, 300, 90);
+      // Mantener proporción con padding
+      const scale = Math.min(300 / sigImg.width, 90 / sigImg.height);
+      const w = sigImg.width  * scale;
+      const h = sigImg.height * scale;
+      const x = (300 - w) / 2;
+      const y = (90  - h) / 2;
+      ctx.drawImage(sigImg, x, y, w, h);
+      // JPEG al 45% — suficiente para ver la firma, ~3-5 KB en base64
+      snapshot._sig = c.toDataURL('image/jpeg', 0.45);
+    } catch(e) { /* si falla, continuar sin firma */ }
   }
 
   try {
@@ -2579,7 +2587,7 @@ async function submitForm() {
   // Construir URL de vista — usa HOSTED_URL si está configurado
   const baseUrl = CONFIG.HOSTED_URL ||
     (window.location.href.startsWith('http') ? window.location.href.split('?')[0] : '');
-  const viewSuffix = buildViewUrl(data);
+  const viewSuffix = await buildViewUrl(data);
   data.viewUrl = baseUrl && viewSuffix ? baseUrl + viewSuffix : '';
 
   // Show progress overlay — blocks tab close accidentally
