@@ -1363,9 +1363,33 @@ async function buildViewUrl(data) {
 
   // Incluir versión comprimida de la firma SOLO para la vista
   // La firma en Drive NO se toca — esta es una copia reducida exclusiva para el link
-  // Incluir firma directamente — PNG de trazos pesa ~5-15KB, OK para la URL
+  // Comprimir firma a JPEG pequeño para que quepa en la URL
+  // Canvas 220x60px, JPEG 25% → ~1-2KB en base64
   if (data.sigConductor) {
-    snapshot._sig = data.sigConductor;
+    try {
+      const sigImg = await new Promise((res, rej) => {
+        const img = new Image();
+        img.onload  = () => res(img);
+        img.onerror = () => rej(new Error('img load failed'));
+        img.src = data.sigConductor;
+      });
+      const c   = document.createElement('canvas');
+      c.width   = 220;
+      c.height  = 60;
+      const ctx = c.getContext('2d');
+      // Fondo blanco — la firma PNG tiene fondo transparente
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 220, 60);
+      // Dibujar firma escalada, centrada
+      const scale = Math.min(210 / sigImg.width, 54 / sigImg.height);
+      const w = sigImg.width  * scale;
+      const h = sigImg.height * scale;
+      ctx.drawImage(sigImg, (220 - w) / 2, (60 - h) / 2, w, h);
+      // JPEG 25% → ~1-2KB, visible y cabe en URL
+      snapshot._sig = c.toDataURL('image/jpeg', 0.25);
+    } catch(e) {
+      // Sin firma en el link — no afecta nada más
+    }
   }
 
   try {
