@@ -1313,6 +1313,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const hash = window.location.hash;
   const viewData = hash.startsWith('#d=') ? hash.slice(3) : null;
   if (viewData) {
+    // Ocultar INMEDIATAMENTE todo el formulario antes de cualquier operación async
+    document.body.style.visibility = 'hidden';
     await initViewMode(viewData);
     return; // no inicializar formulario editable
   }
@@ -1532,6 +1534,7 @@ async function initViewMode(encoded) {
 
     document.body.innerHTML = '';
     document.body.appendChild(container);
+    document.body.style.visibility = 'visible';
 
     window._viewModeData = data;
     window._viewMode = true;
@@ -1539,6 +1542,7 @@ async function initViewMode(encoded) {
   } catch(e) {
     console.error('Error cargando vista:', e);
     document.body.innerHTML = '<div style="padding:40px;text-align:center;font-family:sans-serif;color:#c0392b">⚠️ Link inválido o expirado</div>';
+    document.body.style.visibility = 'visible';
   }
 }
 
