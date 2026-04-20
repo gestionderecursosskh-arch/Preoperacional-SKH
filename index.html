@@ -2,8 +2,6 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<!-- Ocultar body inmediatamente si es modo vista — evita flash del formulario -->
-<script>if(window.location.hash.startsWith('#d='))document.documentElement.style.visibility='hidden';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>F-SO-005 · Preoperacional Vehículos · SKANHAWK</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -1374,139 +1372,78 @@ function initViewMode(encoded) {
   try {
     const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
 
-    // Ocultar todo el formulario y mostrar solo vista
+    // Ocultar formulario
     document.querySelector('.main').style.display = 'none';
-    document.getElementById('bottomNav')?.remove();
+    const nav = document.getElementById('bottomNav');
+    if (nav) nav.style.display = 'none';
 
-    // Construir UI de vista
-    const container = document.createElement('div');
-    container.style.cssText = 'max-width:700px;margin:0 auto;padding:24px 16px;font-family:"DM Sans",sans-serif';
+    // Construir vista
+    const div = document.createElement('div');
+    div.style.cssText = 'max-width:700px;margin:0 auto;padding:24px 16px;font-family:"DM Sans",sans-serif;color:#333';
 
-    // Header
-    container.innerHTML = `
+    const v = s => (s === undefined || s === null || s === '') ? null : String(s);
+    const row = (label, val, i) => {
+      if (!v(val)) return '';
+      const bg = i%2===0 ? '#fafafa' : '#fff';
+      const c = val==='SI'||val==='B'||val==='BUENO' ? '#1a7a4a' : val==='NO'||val==='M'||val==='MALO' ? '#c0392b' : '#333';
+      return `<tr style="background:${bg}"><td style="padding:7px 12px;font-size:12px;color:#666;width:50%;border-bottom:1px solid #f0f0f0">${label}</td><td style="padding:7px 12px;font-size:12px;font-weight:600;color:${c};border-bottom:1px solid #f0f0f0">${val}</td></tr>`;
+    };
+    const section = (title, rows) => {
+      const body = rows.map((r,i) => row(r[0], v(r[1]), i)).join('');
+      if (!body) return '';
+      return `<div style="margin-bottom:16px">
+        <div style="background:#0F2140;color:#fff;padding:8px 12px;border-radius:8px 8px 0 0;font-size:12px;font-weight:700">${title}</div>
+        <table style="width:100%;border-collapse:collapse;border:1px solid #e0e0e0;border-top:none">${body}</table>
+      </div>`;
+    };
+
+    div.innerHTML = `
       <div style="background:linear-gradient(135deg,#00809D,#0F2140);color:#fff;border-radius:12px;padding:20px 24px;margin-bottom:20px">
         <div style="font-size:11px;letter-spacing:1px;opacity:0.8;margin-bottom:4px">F-SO-005 · SKANHAWK SAS</div>
         <div style="font-size:20px;font-weight:700;letter-spacing:1px">INSPECCIÓN PREOPERACIONAL</div>
-        <div style="font-size:13px;opacity:0.85;margin-top:6px">
-          ${data.fecha||''} · ${data.horaSalida||''} · ${(data.nombreConductor||'').toUpperCase()} · ${(data.placa||'').toUpperCase()}
-        </div>
-      </div>`;
-
-    // Secciones de datos
-    const sections = [
-      { title: '① Datos Generales', rows: [
-        ['Conductor', data.nombreConductor], ['Placa', data.placa],
-        ['Fecha', data.fecha], ['Hora Salida', data.horaSalida],
-        ['N° Licencia', data.numLicencia], ['Marca/Modelo', data.marcaModelo],
-        ['Categoría Licencia', data.categoriaLicencia], ['Vigencia Licencia', data.vigenciaLicencia],
-        ['Km Inicial', data.kmInicial], ['N° Pasajeros', data.numPasajeros],
-        ['Tel. Emergencia', data.telEmergencia], ['Propósito', data.propositoViaje],
-        ['Geolocalización', data.geoField],
-        ['Ruta', (data._waypoints||[]).map((w,i)=>(i+1)+'. '+w.label).join(' → ')],
-      ]},
-      { title: '② Documentación', rows: [
-        ['Licencia de conducción', data.doc1], ['SOAT', data.doc2],
-        ['Tecno-mecánica', data.doc3], ['Tarjeta de propiedad', data.doc4],
-        ['Póliza RC (si aplica)', data.doc5], ['Póliza todo riesgo (si aplica)', data.doc6],
-      ]},
-      { title: '③ Aptitud del Conductor', rows: [
-        ['Descansó 6-8 horas', data.apt1], ['Condiciones físicas/mentales óptimas', data.apt2],
-        ['Consumo de alcohol', data.apt3], ['Sustancias psicoactivas', data.apt4],
-        ['Síntomas de dolor/visual', data.apt5], ['Síntomas gripales', data.apt6],
-        ['Conoce la ruta', data.apt7],
-      ]},
-      { title: '④ Inspección Mecánica', rows: [
-        ['Frenos', data.insp0], ['Llantas', data.insp1], ['Dirección', data.insp2],
-        ['Luces', data.insp3], ['Fluidos', data.insp4], ['Cinturones', data.insp5],
-        ['Espejos', data.insp6], ['Limpiaparabrisas', data.insp7], ['Alarma reversa', data.insp8],
-        ['Cabina', data.insp9], ['Extintor', data.insp10], ['Botiquín', data.insp11],
-        ['Señalización', data.insp12], ['Herramienta', data.insp13],
-        ['Tacos/Linterna', data.insp14], ['Comunicación', data.insp15],
-      ]},
-      { title: '⑤ Velocidad Segura', rows: [
-        ['Confirmó límites de velocidad', data.velConfirm ? 'SÍ' : 'NO'],
-      ]},
-      { title: '⑥ Cierre y Firma', rows: [
-        ['Hallazgo M encontrado', data.hallazgoM], ['Reportó a HSE', data.reporteHSE],
-        ['Acción correctiva', data.accionCorrectiva], ['Vehículo autorizado', data.autorizadoOperar],
-        ['Cédula conductor', data.cedulaConductor],
-        ['Fecha firma', data.fechaFirmaConductor], ['Hora firma', data.horaFirmaConductor],
-      ]},
-    ];
-
-    sections.forEach(sec => {
-      let html = `<div style="margin-bottom:16px">
-        <div style="background:#0F2140;color:#fff;padding:8px 12px;border-radius:8px 8px 0 0;font-size:12px;font-weight:700;letter-spacing:0.5px">${sec.title}</div>
-        <table style="width:100%;border-collapse:collapse;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;overflow:hidden">`;
-      sec.rows.forEach((r, i) => {
-        if (!r[1] && r[1] !== false) return;
-        const val = String(r[1]);
-        const isRisk = (val === 'NO' && ['apt1','apt2','apt7'].some(k => data[k] === 'NO')) ||
-                       (val === 'SI'  && ['apt3','apt4','apt5','apt6'].some(k => data[k] === 'SI')) ||
-                       val === 'M' || val === 'MALO';
-        const bg = i % 2 === 0 ? '#fafafa' : '#fff';
-        const valColor = val === 'SI' || val === 'B' || val === 'BUENO' ? '#1a7a4a' :
-                         val === 'NO' || val === 'M' || val === 'MALO'  ? '#c0392b' : '#333';
-        html += `<tr style="background:${bg}">
-          <td style="padding:7px 12px;font-size:12px;color:#666;width:50%;border-bottom:1px solid #f0f0f0">${r[0]}</td>
-          <td style="padding:7px 12px;font-size:12px;font-weight:600;color:${valColor};border-bottom:1px solid #f0f0f0">${val}</td>
-        </tr>`;
-      });
-      html += '</table></div>';
-      container.innerHTML += html;
-    });
-
-    // ── FIRMA: contenedor con id para llenarlo después sin bloquear render
-    container.innerHTML += `<div style="margin-bottom:16px">
-      <div style="background:#0F2140;color:#fff;padding:8px 12px;border-radius:8px 8px 0 0;font-size:12px;font-weight:700;letter-spacing:0.5px">✍️ FIRMA DEL CONDUCTOR</div>
-      <div id="_sigContainer" style="border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;padding:16px;background:#fafafa">
-        <div style="display:flex;gap:16px;align-items:center">
-          <div id="_sigImg" style="border:1.5px solid #e0e0e0;border-radius:6px;background:#f9f9f9;padding:8px;min-width:200px;min-height:60px;display:flex;align-items:center;justify-content:center">
-            <span style="font-size:11px;color:#bbb">Cargando firma...</span>
-          </div>
-          <div style="font-size:11px;color:#555">
-            <div><strong>${data.nombreConductor||''}</strong> · CC ${data.cedulaConductor||''}</div>
-            <div><strong>Fecha:</strong> ${data.fechaFirmaConductor||''} ${data.horaFirmaConductor||''}</div>
-          </div>
-        </div>
-        <div style="margin-top:10px;padding-top:8px;border-top:1px solid #e0e0e0;font-size:10px;color:#aaa;font-style:italic">
-          Bajo la gravedad de juramento declaro que la información consignada es verídica.
-        </div>
+        <div style="font-size:13px;opacity:0.85;margin-top:6px">${data.fecha||''} · ${data.horaSalida||''} · ${(data.nombreConductor||'').toUpperCase()} · ${(data.placa||'').toUpperCase()}</div>
       </div>
-    </div>`;
+      ${section('① Datos Generales', [
+        ['Conductor',data.nombreConductor],['Placa',data.placa],
+        ['Fecha',data.fecha],['Hora Salida',data.horaSalida],
+        ['N° Licencia',data.numLicencia],['Marca/Modelo',data.marcaModelo],
+        ['Categoría Licencia',data.categoriaLicencia],['Vigencia Licencia',data.vigenciaLicencia],
+        ['Km Inicial',data.kmInicial],['N° Pasajeros',data.numPasajeros],
+        ['Tel. Emergencia',data.telEmergencia],['Propósito',data.propositoViaje],
+        ['Geolocalización',data.geoField],
+        ['Ruta',(data._waypoints||[]).map((w,i)=>(i+1)+'. '+w.label).join(' → ')]
+      ])}
+      ${section('② Documentación', [
+        ['Licencia de conducción',data.doc1],['SOAT',data.doc2],
+        ['Tecno-mecánica',data.doc3],['Tarjeta de propiedad',data.doc4],
+        ['Póliza RC',data.doc5],['Póliza todo riesgo',data.doc6]
+      ])}
+      ${section('③ Aptitud', [
+        ['Descansó 6-8 horas',data.apt1],['Condiciones físicas/mentales',data.apt2],
+        ['Consumo alcohol',data.apt3],['Psicoactivos',data.apt4],
+        ['Síntomas dolor/visual',data.apt5],['Síntomas gripales',data.apt6],['Conoce la ruta',data.apt7]
+      ])}
+      ${section('④ Inspección Mecánica', [
+        ['Frenos',data.insp0],['Llantas',data.insp1],['Dirección',data.insp2],
+        ['Luces',data.insp3],['Fluidos',data.insp4],['Cinturones',data.insp5],
+        ['Espejos',data.insp6],['Limpiaparabrisas',data.insp7],['Alarma reversa',data.insp8],
+        ['Cabina',data.insp9],['Extintor',data.insp10],['Botiquín',data.insp11],
+        ['Señalización',data.insp12],['Herramienta',data.insp13],
+        ['Tacos/Linterna',data.insp14],['Comunicación',data.insp15]
+      ])}
+      ${section('⑤ Velocidad', [['Confirmó límites',data.velConfirm?'SÍ':'NO']])}
+      ${section('⑥ Cierre y Firma', [
+        ['Hallazgo M',data.hallazgoM],['Reportó a HSE',data.reporteHSE],
+        ['Acción correctiva',data.accionCorrectiva],['Vehículo autorizado',data.autorizadoOperar],
+        ['Cédula conductor',data.cedulaConductor],
+        ['Fecha firma',data.fechaFirmaConductor],['Hora firma',data.horaFirmaConductor],
+        ['Firma','✅ Firmado digitalmente']
+      ])}
+      ${data._folderName ? `<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#2e7d32">📁 <strong>Carpeta Drive:</strong> ${data._folderName}</div>` : ''}
+    `;
 
-    // Carpeta Drive
-    if (data._folderName) {
-      container.innerHTML += `<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#2e7d32">
-        📁 <strong>Carpeta Drive:</strong> ${data._folderName}
-      </div>`;
-    }
-
-    // Render inmediato — sin esperar firma
     document.body.innerHTML = '';
-    document.body.appendChild(container);
-    window._viewModeData = data;
-    window._viewMode = true;
-
-    // Cargar firma en segundo plano SIN bloquear el render
-    const _folder = data._folderName || '';
-    if (_folder && CONFIG.APPS_SCRIPT_URL) {
-      fetch(CONFIG.APPS_SCRIPT_URL + '?action=getSig&folder=' + encodeURIComponent(_folder))
-        .then(r => r.json())
-        .then(j => {
-          const el = document.getElementById('_sigImg');
-          if (!el) return;
-          if (j.sig) {
-            el.innerHTML = '<img src="' + j.sig + '" style="max-width:240px;max-height:90px;display:block;background:#fff">';
-          } else {
-            el.innerHTML = '<span style="font-size:11px;color:#1a7a4a;font-weight:600">✅ Firmado digitalmente</span>';
-          }
-        })
-        .catch(() => {
-          const el = document.getElementById('_sigImg');
-          if (el) el.innerHTML = '<span style="font-size:11px;color:#1a7a4a;font-weight:600">✅ Firmado digitalmente</span>';
-        });
-    }
+    document.body.appendChild(div);
 
   } catch(e) {
     console.error('Error cargando vista:', e);
@@ -2542,33 +2479,6 @@ async function submitForm() {
     (window.location.href.startsWith('http') ? window.location.href.split('?')[0] : '');
   const viewSuffix = await buildViewUrl(data);
   data.viewUrl = baseUrl && viewSuffix ? baseUrl + viewSuffix : '';
-
-  // Guardar firma comprimida en Apps Script PropertiesService
-  // Así se puede recuperar desde CUALQUIER dispositivo al abrir el registro
-  if (data.sigConductor && data.folderName && CONFIG.APPS_SCRIPT_URL) {
-    try {
-      const sigImg = await new Promise((res, rej) => {
-        const img = new Image();
-        img.onload = () => res(img);
-        img.onerror = rej;
-        img.src = data.sigConductor;
-      });
-      const c = document.createElement('canvas');
-      c.width = 240; c.height = 70;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, 240, 70);
-      const scale = Math.min(230 / sigImg.width, 64 / sigImg.height);
-      ctx.drawImage(sigImg, (240 - sigImg.width*scale)/2, (70 - sigImg.height*scale)/2,
-                    sigImg.width*scale, sigImg.height*scale);
-      const sigCompressed = c.toDataURL('image/jpeg', 0.5);
-      fetch(CONFIG.APPS_SCRIPT_URL, {
-        method: 'POST', mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'storeSig', folderName: data.folderName, sig: sigCompressed })
-      });
-    } catch(e) { /* continuar sin guardar firma */ }
-  }
 
   // Show progress overlay — blocks tab close accidentally
   showUploadOverlay();
