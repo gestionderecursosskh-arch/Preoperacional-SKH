@@ -1307,9 +1307,11 @@ let formData = {};
 // INIT
 // ═══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  // ── MODO VISTA: si la URL tiene ?d=... cargar datos y mostrar solo lectura
-  const urlParams = new URLSearchParams(window.location.search);
-  const viewData  = urlParams.get('d');
+  // ── MODO VISTA: si la URL tiene #d=... cargar datos y mostrar solo lectura
+  // Usamos hash (#) en lugar de query (?) — el hash nunca se envía al servidor,
+  // por lo que no hay límite de tamaño de URL (resuelve error "URI Too Long")
+  const hash = window.location.hash;
+  const viewData = hash.startsWith('#d=') ? hash.slice(3) : null;
   if (viewData) {
     initViewMode(viewData);
     return; // no inicializar formulario editable
@@ -1396,7 +1398,7 @@ async function buildViewUrl(data) {
     const base = CONFIG.HOSTED_URL ||
       (window.location.href.startsWith('http') ? window.location.href.split('?')[0] : '');
     if (!base) return '';
-    return '?d=' + btoa(unescape(encodeURIComponent(JSON.stringify(snapshot))));
+    return '#d=' + btoa(unescape(encodeURIComponent(JSON.stringify(snapshot))));
   } catch(e) {
     return '';
   }
