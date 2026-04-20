@@ -1343,7 +1343,6 @@ function setTodayDefaults() {
 
 // ── Construir URL de vista con los datos del formulario codificados ──
 async function buildViewUrl(data) {
-  // Solo guardar campos de texto (sin archivos ni firma original)
   const snapshot = {};
   const keys = [
     'fecha','horaSalida','nombreConductor','placa','numLicencia','marcaModelo',
@@ -1362,50 +1361,17 @@ async function buildViewUrl(data) {
   keys.forEach(k => { if (data[k] !== undefined && data[k] !== '') snapshot[k] = data[k]; });
   snapshot._waypoints  = data.waypoints || [];
   snapshot._folderName = data.folderName || '';
-
-  // Incluir versión comprimida de la firma SOLO para la vista
-  // La firma en Drive NO se toca — esta es una copia reducida exclusiva para el link
-  // Comprimir firma a JPEG pequeño para que quepa en la URL
-  // Canvas 220x60px, JPEG 25% → ~1-2KB en base64
-  if (data.sigConductor) {
-    try {
-      const sigImg = await new Promise((res, rej) => {
-        const img = new Image();
-        img.onload  = () => res(img);
-        img.onerror = () => rej(new Error('img load failed'));
-        img.src = data.sigConductor;
-      });
-      const c   = document.createElement('canvas');
-      c.width   = 220;
-      c.height  = 60;
-      const ctx = c.getContext('2d');
-      // Fondo blanco — la firma PNG tiene fondo transparente
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, 220, 60);
-      // Dibujar firma escalada, centrada
-      const scale = Math.min(210 / sigImg.width, 54 / sigImg.height);
-      const w = sigImg.width  * scale;
-      const h = sigImg.height * scale;
-      ctx.drawImage(sigImg, (220 - w) / 2, (60 - h) / 2, w, h);
-      // JPEG 25% → ~1-2KB, visible y cabe en URL
-      snapshot._sig = c.toDataURL('image/jpeg', 0.25);
-    } catch(e) {
-      // Sin firma en el link — no afecta nada más
-    }
-  }
-
+  // Firma NO va en la URL — se guarda en Apps Script PropertiesService
   try {
     const base = CONFIG.HOSTED_URL ||
       (window.location.href.startsWith('http') ? window.location.href.split('?')[0] : '');
     if (!base) return '';
     return '#d=' + btoa(unescape(encodeURIComponent(JSON.stringify(snapshot))));
-  } catch(e) {
-    return '';
-  }
+  } catch(e) { return ''; }
 }
 
 // ── Modo Vista: carga datos en solo lectura y muestra panel de PDF ──
-function initViewMode(encoded) {
+async function initViewMode(encoded) {
   try {
     const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
 
@@ -1492,9 +1458,17 @@ function initViewMode(encoded) {
     });
 
     // ── FIRMA DEL CONDUCTOR ──────────────────────────────────────────
-    // Usar firma comprimida del snapshot (viaja en la URL, visible desde cualquier dispositivo)
-    // La firma original en Drive NO se afecta
-    const sigData = data._sig || null;
+    // La firma se recupera desde Apps Script PropertiesService
+    // Funciona desde CUALQUIER dispositivo
+    let sigData = null;
+    const folderName = data._folderName || '';
+    if (folderName && CONFIG.APPS_SCRIPT_URL) {
+      try {
+        const resp = await fetch(CONFIG.APPS_SCRIPT_URL + '?action=getSig&folder=' + encodeURIComponent(folderName));
+        const json = await resp.json();
+        if (json.sig) sigData = json.sig;
+      } catch(e) { /* sin firma disponible */ }
+    }
 
     let sigHtml = `<div style="margin-bottom:16px">
       <div style="background:#0F2140;color:#fff;padding:8px 12px;border-radius:8px 8px 0 0;font-size:12px;font-weight:700;letter-spacing:0.5px">✍️ FIRMA DEL CONDUCTOR</div>
@@ -2596,6 +2570,33 @@ async function submitForm() {
     (window.location.href.startsWith('http') ? window.location.href.split('?')[0] : '');
   const viewSuffix = await buildViewUrl(data);
   data.viewUrl = baseUrl && viewSuffix ? baseUrl + viewSuffix : '';
+
+  // Guardar firma comprimida en Apps Script PropertiesService
+  // Así se puede recuperar desde CUALQUIER dispositivo al abrir el registro
+  if (data.sigConductor && data.folderName && CONFIG.APPS_SCRIPT_URL) {
+    try {
+      const sigImg = await new Promise((res, rej) => {
+        const img = new Image();
+        img.onload = () => res(img);
+        img.onerror = rej;
+        img.src = data.sigConductor;
+      });
+      const c = document.createElement('canvas');
+      c.width = 240; c.height = 70;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 240, 70);
+      const scale = Math.min(230 / sigImg.width, 64 / sigImg.height);
+      ctx.drawImage(sigImg, (240 - sigImg.width*scale)/2, (70 - sigImg.height*scale)/2,
+                    sigImg.width*scale, sigImg.height*scale);
+      const sigCompressed = c.toDataURL('image/jpeg', 0.5);
+      fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'storeSig', folderName: data.folderName, sig: sigCompressed })
+      });
+    } catch(e) { /* continuar sin guardar firma */ }
+  }
 
   // Show progress overlay — blocks tab close accidentally
   showUploadOverlay();
