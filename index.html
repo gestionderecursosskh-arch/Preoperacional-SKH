@@ -911,7 +911,29 @@
               <button class="map-btn danger" onclick="clearRoute()">✕ Limpiar ruta</button>
             </div>
             <div class="waypoints-list" id="waypointsList"></div>
-            <input type="text" id="newWaypointInput" placeholder="Ingresa dirección o lugar..." style="margin-top:8px; display:none">
+            <!-- Panel de ingreso de punto — oculto por defecto -->
+            <div id="waypointPanel" style="display:none;margin-top:10px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:12px;gap:8px;flex-direction:column">
+              <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:4px">Ingresa dirección o lugar</div>
+              <input type="text" id="newWaypointInput"
+                placeholder="Ej: Calle 72 con Cra 11, Bogotá..."
+                style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;
+                       font-family:'DM Sans',sans-serif;font-size:14px;box-sizing:border-box;
+                       -webkit-appearance:none;appearance:none">
+              <div style="display:flex;gap:8px;margin-top:4px">
+                <button onclick="confirmWaypoint()"
+                  style="flex:1;padding:11px;background:var(--brand-teal);color:#fff;border:none;border-radius:8px;
+                         font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer">
+                  ✓ Agregar
+                </button>
+                <button onclick="cancelWaypoint()"
+                  style="flex:0 0 auto;padding:11px 16px;background:var(--surface);color:var(--text-muted);
+                         border:1.5px solid var(--border);border-radius:8px;
+                         font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer">
+                  ✕
+                </button>
+              </div>
+            </div>
+            <input type="text" id="newWaypointInput_legacy" style="display:none">
           </div>
         </div>
       </div>
@@ -1161,44 +1183,88 @@
           <!-- Delantera -->
           <div>
             <label style="display:block; margin-bottom:6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted)">🔵 Fotografía Delantera <span style="color:#e8620a">*</span></label>
-            <div class="upload-zone" id="zone_front">
-              <input type="file" id="photo_front" accept="image/*" onchange="handleVehiclePhoto(this,'front','zone_front','preview_front')">
-              <div class="upload-icon" id="icon_front" style="font-size:32px;margin-bottom:6px">📷</div>
-              <div class="upload-text" id="text_front"><strong>Toca para tomar foto o seleccionar</strong><br>JPG, PNG</div>
-              <img id="preview_front" style="display:none; width:100%; height:100px; object-fit:cover; border-radius:4px; margin-top:6px">
+            <div id="zone_front" style="border:1.5px dashed var(--border);border-radius:8px;background:var(--surface2);padding:10px">
+              <img id="preview_front" style="display:none;width:100%;height:100px;object-fit:cover;border-radius:6px;margin-bottom:8px">
+              <div id="icon_front" style="text-align:center;font-size:28px;margin-bottom:6px">📷</div>
+              <div id="text_front" style="text-align:center;font-size:11px;color:var(--text-muted);margin-bottom:8px">Tomar foto o seleccionar de galería</div>
+              <div style="display:flex;gap:8px">
+                <input type="file" id="photo_front_cam" accept="image/*" capture="environment" style="display:none" onchange="handleVehiclePhoto(this,'front','zone_front','preview_front')">
+                <button type="button" onclick="document.getElementById('photo_front_cam').click()"
+                  style="flex:1;padding:9px 4px;background:var(--brand-teal);color:#fff;border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer">
+                  📷 Cámara
+                </button>
+                <input type="file" id="photo_front_gal" accept="image/*" style="display:none" onchange="handleVehiclePhoto(this,'front','zone_front','preview_front')">
+                <button type="button" onclick="document.getElementById('photo_front_gal').click()"
+                  style="flex:1;padding:9px 4px;background:var(--surface);color:var(--navy);border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer">
+                  🖼️ Galería
+                </button>
+              </div>
             </div>
           </div>
 
           <!-- Trasera -->
           <div>
             <label style="display:block; margin-bottom:6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted)">🔴 Fotografía Trasera <span style="color:#e8620a">*</span></label>
-            <div class="upload-zone" id="zone_back">
-              <input type="file" id="photo_back" accept="image/*" onchange="handleVehiclePhoto(this,'back','zone_back','preview_back')">
-              <div class="upload-icon" id="icon_back" style="font-size:32px;margin-bottom:6px">📷</div>
-              <div class="upload-text" id="text_back"><strong>Toca para tomar foto o seleccionar</strong><br>JPG, PNG</div>
-              <img id="preview_back" style="display:none; width:100%; height:100px; object-fit:cover; border-radius:4px; margin-top:6px">
+            <div id="zone_back" style="border:1.5px dashed var(--border);border-radius:8px;background:var(--surface2);padding:10px">
+              <img id="preview_back" style="display:none;width:100%;height:100px;object-fit:cover;border-radius:6px;margin-bottom:8px">
+              <div id="icon_back" style="text-align:center;font-size:28px;margin-bottom:6px">📷</div>
+              <div id="text_back" style="text-align:center;font-size:11px;color:var(--text-muted);margin-bottom:8px">Tomar foto o seleccionar de galería</div>
+              <div style="display:flex;gap:8px">
+                <input type="file" id="photo_back_cam" accept="image/*" capture="environment" style="display:none" onchange="handleVehiclePhoto(this,'back','zone_back','preview_back')">
+                <button type="button" onclick="document.getElementById('photo_back_cam').click()"
+                  style="flex:1;padding:9px 4px;background:var(--brand-teal);color:#fff;border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer">
+                  📷 Cámara
+                </button>
+                <input type="file" id="photo_back_gal" accept="image/*" style="display:none" onchange="handleVehiclePhoto(this,'back','zone_back','preview_back')">
+                <button type="button" onclick="document.getElementById('photo_back_gal').click()"
+                  style="flex:1;padding:9px 4px;background:var(--surface);color:var(--navy);border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer">
+                  🖼️ Galería
+                </button>
+              </div>
             </div>
           </div>
 
           <!-- Lateral izquierdo -->
           <div>
             <label style="display:block; margin-bottom:6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted)">🟡 Lateral Izquierdo <span style="color:#e8620a">*</span></label>
-            <div class="upload-zone" id="zone_left">
-              <input type="file" id="photo_left" accept="image/*" onchange="handleVehiclePhoto(this,'left','zone_left','preview_left')">
-              <div class="upload-icon" id="icon_left">📷</div>
-              <div class="upload-text" id="text_left"><strong>Toca para tomar foto o seleccionar</strong><br>JPG, PNG</div>
-              <img id="preview_left" style="display:none; width:100%; height:100px; object-fit:cover; border-radius:4px; margin-top:6px">
+            <div id="zone_left" style="border:1.5px dashed var(--border);border-radius:8px;background:var(--surface2);padding:10px">
+              <img id="preview_left" style="display:none;width:100%;height:100px;object-fit:cover;border-radius:6px;margin-bottom:8px">
+              <div id="icon_left" style="text-align:center;font-size:28px;margin-bottom:6px">📷</div>
+              <div id="text_left" style="text-align:center;font-size:11px;color:var(--text-muted);margin-bottom:8px">Tomar foto o seleccionar de galería</div>
+              <div style="display:flex;gap:8px">
+                <input type="file" id="photo_left_cam" accept="image/*" capture="environment" style="display:none" onchange="handleVehiclePhoto(this,'left','zone_left','preview_left')">
+                <button type="button" onclick="document.getElementById('photo_left_cam').click()"
+                  style="flex:1;padding:9px 4px;background:var(--brand-teal);color:#fff;border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer">
+                  📷 Cámara
+                </button>
+                <input type="file" id="photo_left_gal" accept="image/*" style="display:none" onchange="handleVehiclePhoto(this,'left','zone_left','preview_left')">
+                <button type="button" onclick="document.getElementById('photo_left_gal').click()"
+                  style="flex:1;padding:9px 4px;background:var(--surface);color:var(--navy);border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer">
+                  🖼️ Galería
+                </button>
+              </div>
             </div>
           </div>
 
           <!-- Lateral derecho -->
           <div>
             <label style="display:block; margin-bottom:6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted)">🟢 Lateral Derecho <span style="color:#e8620a">*</span></label>
-            <div class="upload-zone" id="zone_right">
-              <input type="file" id="photo_right" accept="image/*" onchange="handleVehiclePhoto(this,'right','zone_right','preview_right')">
-              <div class="upload-icon" id="icon_right">📷</div>
-              <div class="upload-text" id="text_right"><strong>Toca para tomar foto o seleccionar</strong><br>JPG, PNG</div>
-              <img id="preview_right" style="display:none; width:100%; height:100px; object-fit:cover; border-radius:4px; margin-top:6px">
+            <div id="zone_right" style="border:1.5px dashed var(--border);border-radius:8px;background:var(--surface2);padding:10px">
+              <img id="preview_right" style="display:none;width:100%;height:100px;object-fit:cover;border-radius:6px;margin-bottom:8px">
+              <div id="icon_right" style="text-align:center;font-size:28px;margin-bottom:6px">📷</div>
+              <div id="text_right" style="text-align:center;font-size:11px;color:var(--text-muted);margin-bottom:8px">Tomar foto o seleccionar de galería</div>
+              <div style="display:flex;gap:8px">
+                <input type="file" id="photo_right_cam" accept="image/*" capture="environment" style="display:none" onchange="handleVehiclePhoto(this,'right','zone_right','preview_right')">
+                <button type="button" onclick="document.getElementById('photo_right_cam').click()"
+                  style="flex:1;padding:9px 4px;background:var(--brand-teal);color:#fff;border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer">
+                  📷 Cámara
+                </button>
+                <input type="file" id="photo_right_gal" accept="image/*" style="display:none" onchange="handleVehiclePhoto(this,'right','zone_right','preview_right')">
+                <button type="button" onclick="document.getElementById('photo_right_gal').click()"
+                  style="flex:1;padding:9px 4px;background:var(--surface);color:var(--navy);border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer">
+                  🖼️ Galería
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1653,32 +1719,52 @@ function addWaypointLatLng(lat, lng, label) {
 }
 
 function addWaypoint() {
-  const inp = document.getElementById('newWaypointInput');
-  inp.style.display = 'block';
-  inp.focus();
-  inp.placeholder = 'Ingresa dirección y presiona Enter...';
+  const panel = document.getElementById('waypointPanel');
+  const inp   = document.getElementById('newWaypointInput');
+  panel.style.display = 'flex';
+  inp.value = '';
+  // Pequeño delay para que el teclado virtual aparezca correctamente en iOS/Android
+  setTimeout(() => inp.focus(), 100);
+  // También funciona con Enter en teclado físico
   inp.onkeydown = e => {
-    if (e.key === 'Enter' && inp.value.trim()) {
-      const label = inp.value.trim();
-      // Geocode using Nominatim
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(label)}&limit=1`)
-        .then(r => r.json())
-        .then(data => {
-          if (data.length) {
-            addWaypointLatLng(parseFloat(data[0].lat), parseFloat(data[0].lon), label);
-            showToast('📍 Punto agregado', 'success');
-          } else {
-            addWaypointLatLng(4.7109 + Math.random()*0.1, -74.0721 + Math.random()*0.1, label);
-            showToast('📍 Punto agregado (sin geocodificación)', 'warning');
-          }
-        })
-        .catch(() => {
-          addWaypointLatLng(4.7109, -74.0721, label);
-        });
-      inp.value = '';
-      inp.style.display = 'none';
-    }
+    if (e.key === 'Enter') { e.preventDefault(); confirmWaypoint(); }
+    if (e.key === 'Escape') cancelWaypoint();
   };
+}
+
+function confirmWaypoint() {
+  const inp   = document.getElementById('newWaypointInput');
+  const panel = document.getElementById('waypointPanel');
+  const label = inp.value.trim();
+  if (!label) { inp.focus(); return; }
+
+  panel.style.display = 'none';
+  inp.value = '';
+  showToast('🔍 Buscando ubicación...', '');
+
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(label)}&limit=1`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.length) {
+        addWaypointLatLng(parseFloat(data[0].lat), parseFloat(data[0].lon), label);
+        showToast('📍 Punto agregado', 'success');
+      } else {
+        // Sin geocodificación: agregar con coords aproximadas de Bogotá
+        addWaypointLatLng(4.7109 + Math.random()*0.1, -74.0721 + Math.random()*0.1, label);
+        showToast('📍 Punto agregado', 'success');
+      }
+    })
+    .catch(() => {
+      addWaypointLatLng(4.7109, -74.0721, label);
+      showToast('📍 Punto agregado (sin conexión)', 'warning');
+    });
+}
+
+function cancelWaypoint() {
+  const panel = document.getElementById('waypointPanel');
+  const inp   = document.getElementById('newWaypointInput');
+  panel.style.display = 'none';
+  inp.value = '';
 }
 
 function useCurrentLocation() {
