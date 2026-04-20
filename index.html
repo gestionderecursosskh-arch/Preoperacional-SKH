@@ -1308,17 +1308,12 @@ let formData = {};
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', async () => {
-  // ── MODO VISTA: si la URL tiene #d=... cargar datos y mostrar solo lectura
-  // Usamos hash (#) en lugar de query (?) — el hash nunca se envía al servidor,
-  // por lo que no hay límite de tamaño de URL (resuelve error "URI Too Long")
+document.addEventListener('DOMContentLoaded', () => {
   const hash = window.location.hash;
   const viewData = hash.startsWith('#d=') ? hash.slice(3) : null;
   if (viewData) {
-    // Ocultar INMEDIATAMENTE todo el formulario antes de cualquier operación async
-    document.body.style.visibility = 'hidden';
-    await initViewMode(viewData);
-    return; // no inicializar formulario editable
+    initViewMode(viewData);
+    return;
   }
 
   // Modo normal editable
@@ -1375,7 +1370,7 @@ async function buildViewUrl(data) {
 }
 
 // ── Modo Vista: carga datos en solo lectura y muestra panel de PDF ──
-async function initViewMode(encoded) {
+function initViewMode(encoded) {
   try {
     const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
 
@@ -1461,68 +1456,24 @@ async function initViewMode(encoded) {
       container.innerHTML += html;
     });
 
-    // ── FIRMA DEL CONDUCTOR ──────────────────────────────────────────
-    // La firma se recupera desde Apps Script PropertiesService
-    // Funciona desde CUALQUIER dispositivo
-    let sigData = null;
-    const folderName = data._folderName || '';
-    if (folderName && CONFIG.APPS_SCRIPT_URL) {
-      try {
-        const resp = await fetch(CONFIG.APPS_SCRIPT_URL + '?action=getSig&folder=' + encodeURIComponent(folderName));
-        const json = await resp.json();
-        if (json.sig) sigData = json.sig;
-      } catch(e) { /* sin firma disponible */ }
-    }
-
-    let sigHtml = `<div style="margin-bottom:16px">
+    // ── FIRMA: contenedor con id para llenarlo después sin bloquear render
+    container.innerHTML += `<div style="margin-bottom:16px">
       <div style="background:#0F2140;color:#fff;padding:8px 12px;border-radius:8px 8px 0 0;font-size:12px;font-weight:700;letter-spacing:0.5px">✍️ FIRMA DEL CONDUCTOR</div>
-      <div style="border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;padding:16px;background:#fafafa">`;
-
-    if (sigData) {
-      // Firma visible desde cualquier dispositivo
-      sigHtml += `
-        <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
-          <div style="flex:1;min-width:200px">
-            <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Firma digital</div>
-            <div style="border:1.5px solid #e0e0e0;border-radius:6px;background:#fff;padding:8px;display:inline-block;min-width:200px;min-height:60px">
-              <img src="${sigData}" style="max-width:280px;max-height:100px;display:block;background:#fff">
-            </div>
-            <div style="margin-top:6px;font-size:10px;color:#999;border-top:1px solid #ccc;padding-top:4px;max-width:280px">
-              ${data.nombreConductor || ''} · CC ${data.cedulaConductor || ''}
-            </div>
+      <div id="_sigContainer" style="border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;padding:16px;background:#fafafa">
+        <div style="display:flex;gap:16px;align-items:center">
+          <div id="_sigImg" style="border:1.5px solid #e0e0e0;border-radius:6px;background:#f9f9f9;padding:8px;min-width:200px;min-height:60px;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:11px;color:#bbb">Cargando firma...</span>
           </div>
-          <div style="flex:0 0 auto;font-size:11px;color:#555">
-            <div><strong>Fecha:</strong> ${data.fechaFirmaConductor || ''}</div>
-            <div><strong>Hora:</strong> ${data.horaFirmaConductor || ''}</div>
-            <div style="margin-top:8px;font-size:10px;color:#1a7a4a">✅ Firma verificada</div>
+          <div style="font-size:11px;color:#555">
+            <div><strong>${data.nombreConductor||''}</strong> · CC ${data.cedulaConductor||''}</div>
+            <div><strong>Fecha:</strong> ${data.fechaFirmaConductor||''} ${data.horaFirmaConductor||''}</div>
           </div>
-        </div>`;
-    } else {
-      // Sin firma en el snapshot
-      sigHtml += `
-        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
-          <div style="border:2px solid #1a7a4a;border-radius:8px;padding:12px 20px;text-align:center;color:#1a7a4a;min-width:160px">
-            <div style="font-size:22px;margin-bottom:4px">✅</div>
-            <div style="font-size:11px;font-weight:700;letter-spacing:0.5px">FIRMADO DIGITALMENTE</div>
-            <div style="font-size:10px;margin-top:2px">${data.fechaFirmaConductor || ''} ${data.horaFirmaConductor || ''}</div>
-          </div>
-          <div style="font-size:12px;color:#555">
-            <div><strong>${data.nombreConductor || ''}</strong></div>
-            <div>CC ${data.cedulaConductor || ''}</div>
-            <div style="margin-top:4px;font-size:10px;color:#999">La firma original se encuentra en Google Drive.</div>
-          </div>
-        </div>`;
-    }
-
-    sigHtml += `
-        <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e0e0e0;font-size:10px;color:#aaa;font-style:italic">
+        </div>
+        <div style="margin-top:10px;padding-top:8px;border-top:1px solid #e0e0e0;font-size:10px;color:#aaa;font-style:italic">
           Bajo la gravedad de juramento declaro que la información consignada es verídica.
         </div>
       </div>
     </div>`;
-
-    container.innerHTML += sigHtml;
-    // ────────────────────────────────────────────────────────────────
 
     // Carpeta Drive
     if (data._folderName) {
@@ -1531,20 +1482,35 @@ async function initViewMode(encoded) {
       </div>`;
     }
 
-    // Botones PDF
-
-
+    // Render inmediato — sin esperar firma
     document.body.innerHTML = '';
     document.body.appendChild(container);
-    document.documentElement.style.visibility = 'visible';
-
     window._viewModeData = data;
     window._viewMode = true;
+
+    // Cargar firma en segundo plano SIN bloquear el render
+    const _folder = data._folderName || '';
+    if (_folder && CONFIG.APPS_SCRIPT_URL) {
+      fetch(CONFIG.APPS_SCRIPT_URL + '?action=getSig&folder=' + encodeURIComponent(_folder))
+        .then(r => r.json())
+        .then(j => {
+          const el = document.getElementById('_sigImg');
+          if (!el) return;
+          if (j.sig) {
+            el.innerHTML = '<img src="' + j.sig + '" style="max-width:240px;max-height:90px;display:block;background:#fff">';
+          } else {
+            el.innerHTML = '<span style="font-size:11px;color:#1a7a4a;font-weight:600">✅ Firmado digitalmente</span>';
+          }
+        })
+        .catch(() => {
+          const el = document.getElementById('_sigImg');
+          if (el) el.innerHTML = '<span style="font-size:11px;color:#1a7a4a;font-weight:600">✅ Firmado digitalmente</span>';
+        });
+    }
 
   } catch(e) {
     console.error('Error cargando vista:', e);
     document.body.innerHTML = '<div style="padding:40px;text-align:center;font-family:sans-serif;color:#c0392b">⚠️ Link inválido o expirado</div>';
-    document.documentElement.style.visibility = 'visible';
   }
 }
 
