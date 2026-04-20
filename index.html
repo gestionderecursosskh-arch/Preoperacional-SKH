@@ -1340,7 +1340,7 @@ function setTodayDefaults() {
 
 // ── Construir URL de vista con los datos del formulario codificados ──
 async function buildViewUrl(data) {
-  const snapshot = {};
+  // Orden fijo de claves — debe coincidir exactamente con VKEYS en initViewMode
   const keys = [
     'fecha','horaSalida','nombreConductor','placa','numLicencia','marcaModelo',
     'categoriaLicencia','vigenciaLicencia','kmInicial','numPasajeros',
@@ -1349,106 +1349,107 @@ async function buildViewUrl(data) {
     'apt1','apt2','apt3','apt4','apt5','apt6','apt7',
     'insp0','insp1','insp2','insp3','insp4','insp5','insp6','insp7',
     'insp8','insp9','insp10','insp11','insp12','insp13','insp14','insp15',
-    'inspDesc0','inspDesc1','inspDesc2','inspDesc3','inspDesc4','inspDesc5',
-    'inspDesc6','inspDesc7','inspDesc8','inspDesc9','inspDesc10','inspDesc11',
-    'inspDesc12','inspDesc13','inspDesc14','inspDesc15',
     'velConfirm','hallazgoM','reporteHSE','accionCorrectiva','autorizadoOperar',
-    'cedulaConductor','fechaFirmaConductor','horaFirmaConductor'
+    'cedulaConductor','fechaFirmaConductor','horaFirmaConductor','_waypoints','_folderName'
   ];
-  keys.forEach(k => { if (data[k] !== undefined && data[k] !== '') snapshot[k] = data[k]; });
-  snapshot._waypoints  = data.waypoints || [];
-  snapshot._folderName = data.folderName || '';
-  // Firma NO va en la URL — se guarda en Apps Script PropertiesService
+  // Codificación compacta: array de valores (sin nombres de clave) → 55% más corto
+  const arr = keys.map(k => {
+    if (k === '_waypoints') return data.waypoints || [];
+    if (k === '_folderName') return data.folderName || '';
+    const val = data[k];
+    return (val === undefined || val === null || val === '') ? '' : val;
+  });
   try {
     const base = CONFIG.HOSTED_URL ||
       (window.location.href.startsWith('http') ? window.location.href.split('?')[0] : '');
     if (!base) return '';
-    return '#d=' + btoa(unescape(encodeURIComponent(JSON.stringify(snapshot))));
+    return '#d=' + btoa(unescape(encodeURIComponent(JSON.stringify(arr))));
   } catch(e) { return ''; }
 }
 
 // ── Modo Vista: carga datos en solo lectura y muestra panel de PDF ──
 function initViewMode(encoded) {
+  // Decodificar datos compactos (array de valores en orden fijo de VKEYS)
+  const VKEYS = ['fecha','horaSalida','nombreConductor','placa','numLicencia','marcaModelo','categoriaLicencia','vigenciaLicencia','kmInicial','numPasajeros','telEmergencia','propositoViaje','geoField','doc1','doc2','doc3','doc4','doc5','doc6','apt1','apt2','apt3','apt4','apt5','apt6','apt7','insp0','insp1','insp2','insp3','insp4','insp5','insp6','insp7','insp8','insp9','insp10','insp11','insp12','insp13','insp14','insp15','velConfirm','hallazgoM','reporteHSE','accionCorrectiva','autorizadoOperar','cedulaConductor','fechaFirmaConductor','horaFirmaConductor','_waypoints','_folderName'];
+  let data = {};
   try {
-    const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
-
-    // Ocultar formulario
-    document.querySelector('.main').style.display = 'none';
-    const nav = document.getElementById('bottomNav');
-    if (nav) nav.style.display = 'none';
-
-    // Construir vista
-    const div = document.createElement('div');
-    div.style.cssText = 'max-width:700px;margin:0 auto;padding:24px 16px;font-family:"DM Sans",sans-serif;color:#333';
-
-    const v = s => (s === undefined || s === null || s === '') ? null : String(s);
-    const row = (label, val, i) => {
-      if (!v(val)) return '';
-      const bg = i%2===0 ? '#fafafa' : '#fff';
-      const c = val==='SI'||val==='B'||val==='BUENO' ? '#1a7a4a' : val==='NO'||val==='M'||val==='MALO' ? '#c0392b' : '#333';
-      return `<tr style="background:${bg}"><td style="padding:7px 12px;font-size:12px;color:#666;width:50%;border-bottom:1px solid #f0f0f0">${label}</td><td style="padding:7px 12px;font-size:12px;font-weight:600;color:${c};border-bottom:1px solid #f0f0f0">${val}</td></tr>`;
-    };
-    const section = (title, rows) => {
-      const body = rows.map((r,i) => row(r[0], v(r[1]), i)).join('');
-      if (!body) return '';
-      return `<div style="margin-bottom:16px">
-        <div style="background:#0F2140;color:#fff;padding:8px 12px;border-radius:8px 8px 0 0;font-size:12px;font-weight:700">${title}</div>
-        <table style="width:100%;border-collapse:collapse;border:1px solid #e0e0e0;border-top:none">${body}</table>
-      </div>`;
-    };
-
-    div.innerHTML = `
-      <div style="background:linear-gradient(135deg,#00809D,#0F2140);color:#fff;border-radius:12px;padding:20px 24px;margin-bottom:20px">
-        <div style="font-size:11px;letter-spacing:1px;opacity:0.8;margin-bottom:4px">F-SO-005 · SKANHAWK SAS</div>
-        <div style="font-size:20px;font-weight:700;letter-spacing:1px">INSPECCIÓN PREOPERACIONAL</div>
-        <div style="font-size:13px;opacity:0.85;margin-top:6px">${data.fecha||''} · ${data.horaSalida||''} · ${(data.nombreConductor||'').toUpperCase()} · ${(data.placa||'').toUpperCase()}</div>
-      </div>
-      ${section('① Datos Generales', [
-        ['Conductor',data.nombreConductor],['Placa',data.placa],
-        ['Fecha',data.fecha],['Hora Salida',data.horaSalida],
-        ['N° Licencia',data.numLicencia],['Marca/Modelo',data.marcaModelo],
-        ['Categoría Licencia',data.categoriaLicencia],['Vigencia Licencia',data.vigenciaLicencia],
-        ['Km Inicial',data.kmInicial],['N° Pasajeros',data.numPasajeros],
-        ['Tel. Emergencia',data.telEmergencia],['Propósito',data.propositoViaje],
-        ['Geolocalización',data.geoField],
-        ['Ruta',(data._waypoints||[]).map((w,i)=>(i+1)+'. '+w.label).join(' → ')]
-      ])}
-      ${section('② Documentación', [
-        ['Licencia de conducción',data.doc1],['SOAT',data.doc2],
-        ['Tecno-mecánica',data.doc3],['Tarjeta de propiedad',data.doc4],
-        ['Póliza RC',data.doc5],['Póliza todo riesgo',data.doc6]
-      ])}
-      ${section('③ Aptitud', [
-        ['Descansó 6-8 horas',data.apt1],['Condiciones físicas/mentales',data.apt2],
-        ['Consumo alcohol',data.apt3],['Psicoactivos',data.apt4],
-        ['Síntomas dolor/visual',data.apt5],['Síntomas gripales',data.apt6],['Conoce la ruta',data.apt7]
-      ])}
-      ${section('④ Inspección Mecánica', [
-        ['Frenos',data.insp0],['Llantas',data.insp1],['Dirección',data.insp2],
-        ['Luces',data.insp3],['Fluidos',data.insp4],['Cinturones',data.insp5],
-        ['Espejos',data.insp6],['Limpiaparabrisas',data.insp7],['Alarma reversa',data.insp8],
-        ['Cabina',data.insp9],['Extintor',data.insp10],['Botiquín',data.insp11],
-        ['Señalización',data.insp12],['Herramienta',data.insp13],
-        ['Tacos/Linterna',data.insp14],['Comunicación',data.insp15]
-      ])}
-      ${section('⑤ Velocidad', [['Confirmó límites',data.velConfirm?'SÍ':'NO']])}
-      ${section('⑥ Cierre y Firma', [
-        ['Hallazgo M',data.hallazgoM],['Reportó a HSE',data.reporteHSE],
-        ['Acción correctiva',data.accionCorrectiva],['Vehículo autorizado',data.autorizadoOperar],
-        ['Cédula conductor',data.cedulaConductor],
-        ['Fecha firma',data.fechaFirmaConductor],['Hora firma',data.horaFirmaConductor],
-        ['Firma','✅ Firmado digitalmente']
-      ])}
-      ${data._folderName ? `<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#2e7d32">📁 <strong>Carpeta Drive:</strong> ${data._folderName}</div>` : ''}
-    `;
-
-    document.body.innerHTML = '';
-    document.body.appendChild(div);
-
+    const raw = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    if (Array.isArray(raw)) {
+      // Formato compacto nuevo: array de valores
+      VKEYS.forEach((k, i) => { if (raw[i] !== undefined && raw[i] !== '') data[k] = raw[i]; });
+    } else {
+      // Formato legado: objeto completo (compatibilidad con links anteriores)
+      data = raw;
+    }
   } catch(e) {
-    console.error('Error cargando vista:', e);
     document.body.innerHTML = '<div style="padding:40px;text-align:center;font-family:sans-serif;color:#c0392b">⚠️ Link inválido o expirado</div>';
+    return;
   }
+
+  const v = s => (s === undefined || s === null || s === '') ? null : String(s);
+  const row = (label, val, i) => {
+    if (!v(val)) return '';
+    const bg = i%2===0 ? '#fafafa' : '#fff';
+    const c = val==='SI'||val==='B'||val==='BUENO' ? '#1a7a4a' : val==='NO'||val==='M'||val==='MALO' ? '#c0392b' : '#333';
+    return `<tr style="background:${bg}"><td style="padding:7px 12px;font-size:12px;color:#666;width:50%;border-bottom:1px solid #f0f0f0">${label}</td><td style="padding:7px 12px;font-size:12px;font-weight:600;color:${c};border-bottom:1px solid #f0f0f0">${val}</td></tr>`;
+  };
+  const section = (title, rows) => {
+    const body = rows.map((r,i) => row(r[0], v(r[1]), i)).join('');
+    if (!body) return '';
+    return `<div style="margin-bottom:16px">
+      <div style="background:#0F2140;color:#fff;padding:8px 12px;border-radius:8px 8px 0 0;font-size:12px;font-weight:700">${title}</div>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e0e0e0;border-top:none">${body}</table>
+    </div>`;
+  };
+
+  const wpts = (data._waypoints||[]).map((w,i)=>(i+1)+'. '+w.label).join(' → ');
+
+  const html = `<div style="max-width:700px;margin:0 auto;padding:24px 16px;font-family:'DM Sans',sans-serif;color:#333">
+    <div style="background:linear-gradient(135deg,#00809D,#0F2140);color:#fff;border-radius:12px;padding:20px 24px;margin-bottom:20px">
+      <div style="font-size:11px;letter-spacing:1px;opacity:0.8;margin-bottom:4px">F-SO-005 · SKANHAWK SAS</div>
+      <div style="font-size:20px;font-weight:700;letter-spacing:1px">INSPECCIÓN PREOPERACIONAL</div>
+      <div style="font-size:13px;opacity:0.85;margin-top:6px">${data.fecha||''} · ${data.horaSalida||''} · ${(data.nombreConductor||'').toUpperCase()} · ${(data.placa||'').toUpperCase()}</div>
+    </div>
+    ${section('① Datos Generales', [
+      ['Conductor',data.nombreConductor],['Placa',data.placa],
+      ['Fecha',data.fecha],['Hora Salida',data.horaSalida],
+      ['N° Licencia',data.numLicencia],['Marca/Modelo',data.marcaModelo],
+      ['Categoría Licencia',data.categoriaLicencia],['Vigencia Licencia',data.vigenciaLicencia],
+      ['Km Inicial',data.kmInicial],['N° Pasajeros',data.numPasajeros],
+      ['Tel. Emergencia',data.telEmergencia],['Propósito',data.propositoViaje],
+      ['Geolocalización',data.geoField],['Ruta',wpts]
+    ])}
+    ${section('② Documentación', [
+      ['Licencia de conducción',data.doc1],['SOAT',data.doc2],
+      ['Tecno-mecánica',data.doc3],['Tarjeta de propiedad',data.doc4],
+      ['Póliza RC',data.doc5],['Póliza todo riesgo',data.doc6]
+    ])}
+    ${section('③ Aptitud', [
+      ['Descansó 6-8 horas',data.apt1],['Condiciones físicas/mentales',data.apt2],
+      ['Consumo alcohol',data.apt3],['Psicoactivos',data.apt4],
+      ['Síntomas dolor/visual',data.apt5],['Síntomas gripales',data.apt6],['Conoce la ruta',data.apt7]
+    ])}
+    ${section('④ Inspección Mecánica', [
+      ['Frenos',data.insp0],['Llantas',data.insp1],['Dirección',data.insp2],
+      ['Luces',data.insp3],['Fluidos',data.insp4],['Cinturones',data.insp5],
+      ['Espejos',data.insp6],['Limpiaparabrisas',data.insp7],['Alarma reversa',data.insp8],
+      ['Cabina',data.insp9],['Extintor',data.insp10],['Botiquín',data.insp11],
+      ['Señalización',data.insp12],['Herramienta',data.insp13],
+      ['Tacos/Linterna',data.insp14],['Comunicación',data.insp15]
+    ])}
+    ${section('⑤ Velocidad', [['Confirmó límites',data.velConfirm?'SÍ':'NO']])}
+    ${section('⑥ Cierre y Firma', [
+      ['Hallazgo M',data.hallazgoM],['Reportó a HSE',data.reporteHSE],
+      ['Acción correctiva',data.accionCorrectiva],['Vehículo autorizado',data.autorizadoOperar],
+      ['Cédula conductor',data.cedulaConductor],
+      ['Fecha firma',data.fechaFirmaConductor],['Hora firma',data.horaFirmaConductor],
+      ['Firma','✅ Firmado digitalmente']
+    ])}
+    ${data._folderName ? `<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:12px 16px;font-size:12px;color:#2e7d32">📁 <strong>Carpeta Drive:</strong> ${data._folderName}</div>` : ''}
+  </div>`;
+
+  // Reemplazar body directamente — sin depender de ningún elemento del formulario
+  document.body.innerHTML = html;
 }
 
 // ═══════════════════════════════════════════
