@@ -575,9 +575,6 @@
   .closure-q { font-size: 13px; flex: 1; line-height: 1.4; }
 
   /* ── SUBMIT BUTTON ── */
-  .leaflet-container { z-index: 0 !important; }
-  .leaflet-pane { z-index: 0 !important; }
-  .leaflet-top, .leaflet-bottom { z-index: 1 !important; }
   .submit-section {
     position: fixed;
     bottom: 0;
@@ -900,17 +897,20 @@
           <label>Ruta / Destino <span class="required">*</span></label>
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;margin-bottom:2px">Agregue todos los destinos que tiene dentro de su ruta para el día</div>
           <div style="margin-top:8px">
-            <div class="map-container">
-              <div id="routeMap" style="background:linear-gradient(135deg,#e8edf5,#dde4f0); display:flex; align-items:center; justify-content:center; font-size:13px; color:#6b6860; flex-direction:column; gap:8px;">
-                <div style="font-size:32px">🗺️</div>
-                <div>Cargando mapa...</div>
-              </div>
-            </div>
+
             <div class="map-controls">
               <button class="map-btn primary" onclick="addWaypoint()">＋ Agregar punto</button>
               <button class="map-btn danger" onclick="clearRoute()">✕ Limpiar ruta</button>
             </div>
-            <div class="waypoints-list" id="waypointsList"></div>
+            <!-- Recuadro de puntos de ruta -->
+            <div style="margin-top:10px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);min-height:80px;padding:12px">
+              <div style="font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Puntos de ruta</div>
+              <div id="waypointsList">
+                <div style="text-align:center;padding:16px 0;color:var(--text-muted);font-size:12px">
+                  Sin puntos agregados
+                </div>
+              </div>
+            </div>
             <!-- Panel de ingreso de punto — oculto por defecto -->
             <div id="waypointPanel" style="display:none;margin-top:10px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:12px;gap:8px;flex-direction:column">
               <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:4px">Ingresa dirección o lugar</div>
@@ -1391,7 +1391,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadDraft();
   updateProgress();
   updateNav();
-  initMap();
 });
 
 function setTodayDefaults() {
@@ -1674,44 +1673,7 @@ function checkInsp(idx, val) {
 // ═══════════════════════════════════════════
 // MAP / ROUTE
 // ═══════════════════════════════════════════
-let map, markers = [], routeLine;
-function initMap() {
-  // Load Leaflet
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
-  document.head.appendChild(link);
-
-  const script = document.createElement('script');
-  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
-  script.onload = () => {
-    const mapEl = document.getElementById('routeMap');
-    mapEl.innerHTML = '';
-    mapEl.style.background = '';
-    map = L.map('routeMap').setView([4.7109, -74.0721], 11);
-    window.map = map; // expose for PDF capture
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19
-    }).addTo(map);
-    map.on('click', e => {
-      const lat = e.latlng.lat, lng = e.latlng.lng;
-      fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&accept-language=es')
-        .then(r => r.json())
-        .then(data => {
-          const label = data.display_name
-            ? data.address
-              ? (data.address.road||data.address.pedestrian||data.address.suburb||data.address.neighbourhood||data.address.town||data.address.city||data.address.state||'Punto en mapa')
-              : data.display_name.split(',')[0]
-            : 'Punto en mapa';
-          addWaypointLatLng(lat, lng, label.trim());
-        })
-        .catch(() => addWaypointLatLng(lat, lng, 'Punto en mapa'));
-    });
-  };
-  document.head.appendChild(script);
-}
+// Mapa eliminado — solo diagrama visual de puntos
 
 function addWaypointLatLng(lat, lng, label) {
   waypoints.push({ lat, lng, label });
@@ -1796,46 +1758,38 @@ function removeWaypoint(idx) {
 function renderWaypoints() {
   const list = document.getElementById('waypointsList');
   list.innerHTML = '';
+  if (!waypoints.length) {
+    list.innerHTML = '<div style="text-align:center;padding:16px 0;color:var(--text-muted);font-size:12px">Sin puntos agregados</div>';
+    return;
+  }
 
-  if (!map) return;
-
-  // Clear markers
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
-  if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
-
+  // Diagrama visual de puntos con línea conectora
   waypoints.forEach((wp, i) => {
     const isStart = i === 0;
-    const isEnd = i === waypoints.length - 1 && waypoints.length > 1;
-    const color = isStart ? '#1a7a4a' : isEnd ? '#e8620a' : '#0f2140';
-
-    const icon = L.divIcon({
-      className: '',
-      html: `<div style="background:${color};color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)">${i+1}</div>`,
-      iconSize: [26, 26],
-      iconAnchor: [13, 13],
-    });
-
-    const marker = L.marker([wp.lat, wp.lng], { icon })
-      .addTo(map)
-      .bindPopup(`<strong>${wp.label}</strong>`);
-    markers.push(marker);
+    const isEnd   = i === waypoints.length - 1 && waypoints.length > 1;
+    const color   = isStart ? '#1a7a4a' : isEnd ? '#e8620a' : '#00809D';
+    const last    = i === waypoints.length - 1;
 
     list.innerHTML += `
-      <div class="waypoint-item">
-        <div class="waypoint-num ${isStart ? 'start' : isEnd ? 'end' : ''}">${i+1}</div>
-        <div class="waypoint-addr">${wp.label}</div>
-        <span class="wp-remove" onclick="removeWaypoint(${i})">×</span>
+      <div style="display:flex;align-items:stretch;gap:0">
+        <!-- Columna izquierda: punto + línea -->
+        <div style="display:flex;flex-direction:column;align-items:center;width:32px;flex-shrink:0">
+          <div style="width:28px;height:28px;border-radius:50%;background:${color};color:#fff;
+                      display:flex;align-items:center;justify-content:center;
+                      font-size:12px;font-weight:700;border:2px solid #fff;
+                      box-shadow:0 2px 6px rgba(0,0,0,0.18);flex-shrink:0">${i+1}</div>
+          ${!last ? `<div style="width:2px;flex:1;min-height:16px;background:repeating-linear-gradient(to bottom,#00809D 0,#00809D 5px,transparent 5px,transparent 9px);margin:3px 0"></div>` : ''}
+        </div>
+        <!-- Columna derecha: label + botón eliminar -->
+        <div style="flex:1;display:flex;align-items:center;justify-content:space-between;
+                    padding:6px 8px ${last ? '0' : '14px'} 10px">
+          <div style="font-size:13px;color:var(--navy);font-weight:${isStart||isEnd?'600':'400'}">${wp.label}</div>
+          <span onclick="removeWaypoint(${i})"
+            style="font-size:18px;color:var(--text-muted);cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0"
+            title="Eliminar">×</span>
+        </div>
       </div>`;
   });
-
-  if (waypoints.length > 1) {
-    const latlngs = waypoints.map(w => [w.lat, w.lng]);
-    routeLine = L.polyline(latlngs, { color: '#0f2140', weight: 3, dashArray: '6,4' }).addTo(map);
-    map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
-  } else if (waypoints.length === 1) {
-    map.setView([waypoints[0].lat, waypoints[0].lng], 13);
-  }
 }
 
 // ═══════════════════════════════════════════
