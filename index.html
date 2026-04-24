@@ -1438,12 +1438,34 @@ let _vehiculos   = []; // [{placa, marcaModelo}]
 
 async function loadMasterData() {
   if (!CONFIG.APPS_SCRIPT_URL) return;
-  try {
-    const res  = await fetch(CONFIG.APPS_SCRIPT_URL + '?action=getMasterData');
-    const json = await res.json();
-    if (json.conductores) _conductores = json.conductores;
-    if (json.vehiculos)   _vehiculos   = json.vehiculos;
-  } catch(e) { /* sin conexión — continuar sin datos maestros */ }
+  return new Promise(resolve => {
+    // JSONP bypasa CORS completamente — el redirect de Apps Script no es un problema
+    const cbName = '_skh_cb_' + Date.now();
+    let done = false;
+
+    window[cbName] = function(data) {
+      done = true;
+      if (Array.isArray(data.conductores)) _conductores = data.conductores;
+      if (Array.isArray(data.vehiculos))   _vehiculos   = data.vehiculos;
+      cleanup();
+      resolve();
+    };
+
+    const script = document.createElement('script');
+    script.src = CONFIG.APPS_SCRIPT_URL + '?action=getMasterData&callback=' + cbName;
+    script.onerror = () => { cleanup(); resolve(); };
+
+    // Timeout de 10 segundos
+    const t = setTimeout(() => { if (!done) { cleanup(); resolve(); } }, 10000);
+
+    function cleanup() {
+      clearTimeout(t);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    document.head.appendChild(script);
+  });
 }
 
 // ── Dropdown conductor ───────────────────────────────────────
