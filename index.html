@@ -841,46 +841,117 @@
             <label>Hora de salida <span class="required">*</span></label>
             <input type="time" id="horaSalida" required>
           </div>
+          <!-- 1. Nombre del conductor -->
           <div class="field">
             <label>Nombre del conductor <span class="required">*</span></label>
-            <input type="text" id="nombreConductor" placeholder="Nombre completo" required>
+            <div style="position:relative">
+              <input type="text" id="nombreConductor" placeholder="Selecciona o escribe nombre completo"
+                autocomplete="off" required
+                oninput="filterConductorList(this.value)"
+                onchange="onConductorChange(this.value)">
+              <div id="conductorDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;
+                background:#fff;border:1.5px solid var(--brand-teal);border-top:none;border-radius:0 0 8px 8px;
+                max-height:180px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.12)"></div>
+            </div>
           </div>
+
+          <!-- 2. Cargo -->
+          <div class="field">
+            <label>Cargo <span class="required">*</span></label>
+            <input type="text" id="cargoConductor" placeholder="Ej: Conductor, Operario...">
+          </div>
+
+          <!-- 3. Fecha de nacimiento -->
+          <div class="field">
+            <label>Fecha de nacimiento <span class="required">*</span></label>
+            <input type="date" id="fechaNacimiento">
+          </div>
+
+          <!-- 4. N° Documento -->
+          <div class="field">
+            <label>N° Documento de identificación <span class="required">*</span></label>
+            <input type="text" id="cedulaConductor" placeholder="Cédula o documento">
+          </div>
+
+          <!-- 5. RH -->
+          <div class="field">
+            <label>RH <span class="required">*</span></label>
+            <input type="text" id="rhConductor" placeholder="Ej: O+, A-, B+...">
+          </div>
+
+          <!-- 6. N° Celular -->
+          <div class="field">
+            <label>N° Celular <span class="required">*</span></label>
+            <input type="tel" id="telEmergencia" placeholder="Ej: 3001234567">
+          </div>
+
+          <!-- 7. Placa del vehículo -->
           <div class="field">
             <label>Placa del vehículo <span class="required">*</span></label>
-            <input type="text" id="placa" placeholder="Ej: ABC123" style="text-transform:uppercase">
+            <div style="position:relative">
+              <input type="text" id="placa" placeholder="Selecciona o escribe placa"
+                autocomplete="off" style="text-transform:uppercase"
+                oninput="filterPlacaList(this.value)"
+                onchange="onPlacaChange(this.value)">
+              <div id="placaDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;
+                background:#fff;border:1.5px solid var(--brand-teal);border-top:none;border-radius:0 0 8px 8px;
+                max-height:180px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.12)"></div>
+            </div>
           </div>
-          <div class="field">
-            <label>N° Licencia de conducción <span class="required">*</span></label>
-            <input type="text" id="numLicencia" placeholder="Número de licencia">
-          </div>
+
+          <!-- 8. Marca / Modelo -->
           <div class="field">
             <label>Marca / Modelo <span class="required">*</span></label>
             <input type="text" id="marcaModelo" placeholder="Ej: Toyota Hilux 2022">
           </div>
+
+          <!-- 10-11. Categorías y vigencias (hasta 3) -->
           <div class="field">
-            <label>Categoría de la licencia <span class="required">*</span></label>
+            <label>Categoría 1 <span class="required">*</span></label>
             <input type="text" id="categoriaLicencia" placeholder="Ej: B2, C1, C2...">
           </div>
           <div class="field">
-            <label>Vigencia de la licencia <span class="required">*</span></label>
-            <input type="date" id="vigenciaLicencia">
+            <label>Vigencia categoría 1 <span class="required">*</span></label>
+            <input type="date" id="vigenciaLicencia" onchange="checkVigencia(this, 'warnVigencia1', 'categoriaLicencia')">
+            <div id="warnVigencia1" style="display:none"></div>
           </div>
+          <div class="field">
+            <label>Categoría 2</label>
+            <input type="text" id="categoriaLicencia2" placeholder="Si aplica">
+          </div>
+          <div class="field">
+            <label>Vigencia categoría 2</label>
+            <input type="date" id="vigenciaLicencia2" onchange="checkVigencia(this, 'warnVigencia2', 'categoriaLicencia2')">
+            <div id="warnVigencia2" style="display:none"></div>
+          </div>
+          <div class="field">
+            <label>Categoría 3</label>
+            <input type="text" id="categoriaLicencia3" placeholder="Si aplica">
+          </div>
+          <div class="field">
+            <label>Vigencia categoría 3</label>
+            <input type="date" id="vigenciaLicencia3" onchange="checkVigencia(this, 'warnVigencia3', 'categoriaLicencia3')">
+            <div id="warnVigencia3" style="display:none"></div>
+          </div>
+
+          <!-- 12. Km inicial -->
           <div class="field">
             <label>Km inicial <span class="required">*</span></label>
             <input type="number" id="kmInicial" placeholder="Kilometraje al salir">
           </div>
+
+          <!-- 13. N° de pasajeros -->
           <div class="field">
             <label>N° de pasajeros <span class="required">*</span></label>
             <input type="number" id="numPasajeros" placeholder="0" min="0">
           </div>
-          <div class="field">
-            <label>Tel. emergencia empresa <span class="required">*</span></label>
-            <input type="tel" id="telEmergencia" placeholder="+57...">
-          </div>
-          <div class="field">
-            <label>Propósito del viaje <span class="required">*</span></label>
-            <input type="text" id="propositoViaje" placeholder="Descripción del propósito">
-          </div>
+
+        </div>
+
+        <!-- Propósito del viaje — ancho completo -->
+        <div class="field" style="margin-top:10px">
+          <label>Propósito del viaje <span class="required">*</span></label>
+          <input type="text" id="propositoViaje" placeholder="Descripción del propósito">
         </div>
 
         <!-- Geolocalización -->
@@ -1360,8 +1431,182 @@ const CONFIG = {
 };
 
 // ═══════════════════════════════════════════
-// STATE
+// DATOS MAESTROS — cargados desde Apps Script
 // ═══════════════════════════════════════════
+let _conductores = []; // [{nombre, documento, fechaNac, rh, licencia, categoria, vigencia, celular}]
+let _vehiculos   = []; // [{placa, marcaModelo}]
+
+async function loadMasterData() {
+  if (!CONFIG.APPS_SCRIPT_URL) return;
+  try {
+    const res  = await fetch(CONFIG.APPS_SCRIPT_URL + '?action=getMasterData');
+    const json = await res.json();
+    if (json.conductores) _conductores = json.conductores;
+    if (json.vehiculos)   _vehiculos   = json.vehiculos;
+  } catch(e) { /* sin conexión — continuar sin datos maestros */ }
+}
+
+// ── Dropdown conductor ───────────────────────────────────────
+function filterConductorList(val) {
+  const dd = document.getElementById('conductorDropdown');
+  const q  = val.trim().toLowerCase();
+  if (!q) { dd.style.display = 'none'; return; }
+  const matches = _conductores.filter(c => c.nombre.toLowerCase().includes(q));
+  if (!matches.length) { dd.style.display = 'none'; return; }
+  dd.innerHTML = matches.map(c => `
+    <div onclick="selectConductor('${c.nombre.replace(/'/g,"\\'")}');event.stopPropagation()"
+      style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0"
+      onmousedown="event.preventDefault()">
+      ${c.nombre} <span style="font-size:11px;color:#aaa">· ${c.documento||''}</span>
+    </div>`).join('');
+  dd.style.display = 'block';
+}
+
+function selectConductor(nombre) {
+  const c = _conductores.find(x => x.nombre === nombre);
+  if (!c) return;
+  document.getElementById('nombreConductor').value    = c.nombre;
+  document.getElementById('cargoConductor').value     = c.cargo        || '';
+  document.getElementById('cedulaConductor').value    = c.documento    || '';
+  document.getElementById('fechaNacimiento').value    = c.fechaNac     || '';
+  document.getElementById('rhConductor').value        = c.rh           || '';
+  document.getElementById('categoriaLicencia').value  = c.categoria    || '';
+  document.getElementById('vigenciaLicencia').value   = c.vigencia     || '';
+  document.getElementById('categoriaLicencia2').value = c.categoria2   || '';
+  document.getElementById('vigenciaLicencia2').value  = c.vigencia2    || '';
+  document.getElementById('categoriaLicencia3').value = c.categoria3   || '';
+  document.getElementById('vigenciaLicencia3').value  = c.vigencia3    || '';
+  document.getElementById('telEmergencia').value      = c.celular      || '';
+  document.getElementById('conductorDropdown').style.display = 'none';
+  checkAllVigencias();
+}
+
+function onConductorChange(val) {
+  document.getElementById('conductorDropdown').style.display = 'none';
+  // Si no está en la lista, es conductor nuevo — se guardará al enviar
+}
+
+// ── Dropdown placa ───────────────────────────────────────────
+function filterPlacaList(val) {
+  const dd = document.getElementById('placaDropdown');
+  const q  = val.trim().toUpperCase();
+  document.getElementById('placa').value = q;
+  if (!q) { dd.style.display = 'none'; return; }
+  const matches = _vehiculos.filter(v => v.placa.toUpperCase().includes(q));
+  if (!matches.length) { dd.style.display = 'none'; return; }
+  dd.innerHTML = matches.map(v => `
+    <div onclick="selectPlaca('${v.placa.replace(/'/g,"\\'")}');event.stopPropagation()"
+      style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0"
+      onmousedown="event.preventDefault()">
+      ${v.placa} <span style="font-size:11px;color:#aaa">· ${v.marcaModelo||''}</span>
+    </div>`).join('');
+  dd.style.display = 'block';
+}
+
+function selectPlaca(placa) {
+  const v = _vehiculos.find(x => x.placa.toUpperCase() === placa.toUpperCase());
+  if (!v) return;
+  document.getElementById('placa').value      = v.placa.toUpperCase();
+  document.getElementById('marcaModelo').value = v.marcaModelo || '';
+  document.getElementById('placaDropdown').style.display = 'none';
+}
+
+function onPlacaChange(val) {
+  document.getElementById('placa').value = val.toUpperCase();
+  document.getElementById('placaDropdown').style.display = 'none';
+  // Si no está en la lista, es vehículo nuevo — se guardará al enviar
+}
+
+// Cerrar dropdowns al hacer clic fuera
+document.addEventListener('click', () => {
+  document.getElementById('conductorDropdown').style.display = 'none';
+  document.getElementById('placaDropdown').style.display     = 'none';
+});
+
+
+// ═══════════════════════════════════════════
+// ALERTA DE VIGENCIA DE LICENCIA
+// ═══════════════════════════════════════════
+function checkVigencia(input, warnId, catId) {
+  const warn = document.getElementById(warnId);
+  if (!warn || !input.value) { if(warn) warn.style.display='none'; return; }
+
+  const cat      = (document.getElementById(catId)?.value || 'licencia').toUpperCase();
+  const hoy      = new Date(); hoy.setHours(0,0,0,0);
+  const vencen   = new Date(input.value + 'T00:00:00');
+  const diffDays = Math.round((vencen - hoy) / 86400000);
+
+  if (diffDays < 0) {
+    warn.innerHTML = `
+      <div style="margin-top:8px;padding:10px 12px;border-radius:8px;
+                  background:#fff0f0;border:1.5px solid #e8420a;
+                  display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:18px;line-height:1">🚫</span>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#c0392b;margin-bottom:2px">
+            LICENCIA ${cat} VENCIDA
+          </div>
+          <div style="font-size:11px;color:#7f2010;line-height:1.4">
+            Venció hace ${Math.abs(diffDays)} día${Math.abs(diffDays)!==1?'s':''}. 
+            <strong>Este vehículo no puede operar</strong> hasta que la licencia sea renovada. 
+            Notifica a tu supervisor de inmediato.
+          </div>
+        </div>
+      </div>`;
+    warn.style.display = 'block';
+  } else if (diffDays <= 30) {
+    const emoji    = diffDays <= 7 ? '🔴' : '⚠️';
+    const urgencia = diffDays <= 7 ? 'RENOVACIÓN URGENTE' : 'RENOVACIÓN PRÓXIMA';
+    const msg      = diffDays <= 7
+      ? `Solo quedan <strong>${diffDays} día${diffDays!==1?'s':''}</strong>. No esperes más — inicia el trámite hoy antes de que sea tarde.`
+      : `Faltan <strong>${diffDays} días</strong>. Es el momento ideal para renovar sin carreras ni contratiempos.`;
+    warn.innerHTML = `
+      <div style="margin-top:8px;padding:10px 12px;border-radius:8px;
+                  background:#fff8e6;border:1.5px solid #f39c12;
+                  display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:18px;line-height:1">${emoji}</span>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#b7770d;margin-bottom:2px">
+            LICENCIA ${cat} — ${urgencia}
+          </div>
+          <div style="font-size:11px;color:#7d5a00;line-height:1.4">
+            ${msg} Licencia válida hasta el <strong>${vencen.toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'})}</strong>.
+          </div>
+        </div>
+      </div>`;
+    warn.style.display = 'block';
+  } else if (diffDays <= 60) {
+    warn.innerHTML = `
+      <div style="margin-top:8px;padding:10px 12px;border-radius:8px;
+                  background:#f0f8ff;border:1.5px solid #00809D;
+                  display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:18px;line-height:1">📋</span>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#00809D;margin-bottom:2px">
+            LICENCIA ${cat} — RECUERDA RENOVAR
+          </div>
+          <div style="font-size:11px;color:#005f7a;line-height:1.4">
+            Tienes <strong>${diffDays} días</strong> antes del vencimiento. 
+            Agenda tu renovación con anticipación para evitar contratiempos en ruta. 
+            Vence el <strong>${vencen.toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'})}</strong>.
+          </div>
+        </div>
+      </div>`;
+    warn.style.display = 'block';
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
+function checkAllVigencias() {
+  [['vigenciaLicencia','warnVigencia1','categoriaLicencia'],
+   ['vigenciaLicencia2','warnVigencia2','categoriaLicencia2'],
+   ['vigenciaLicencia3','warnVigencia3','categoriaLicencia3']].forEach(([id, wid, cid]) => {
+    const input = document.getElementById(id);
+    if (input && input.value) checkVigencia(input, wid, cid);
+  });
+}
+
 let currentSection = 0;
 const TOTAL_SECTIONS = 7;
 let waypoints = [];
@@ -1391,6 +1636,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadDraft();
   updateProgress();
   updateNav();
+  loadMasterData(); // cargar placas y conductores desde Sheets
 });
 
 function setTodayDefaults() {
@@ -1407,9 +1653,10 @@ function setTodayDefaults() {
 async function buildViewUrl(data) {
   // Orden fijo de claves — debe coincidir exactamente con VKEYS en initViewMode
   const keys = [
-    'fecha','horaSalida','nombreConductor','placa','numLicencia','marcaModelo',
-    'categoriaLicencia','vigenciaLicencia','kmInicial','numPasajeros',
+    'fecha','horaSalida','nombreConductor','placa','marcaModelo',
+    'categoriaLicencia','vigenciaLicencia','categoriaLicencia2','vigenciaLicencia2','categoriaLicencia3','vigenciaLicencia3','kmInicial','numPasajeros',
     'telEmergencia','propositoViaje','geoField',
+    'cargoConductor','cedulaConductor','fechaNacimiento','rhConductor',
     'doc1','doc2','doc3','doc4','doc5','doc6',
     'apt1','apt2','apt3','apt4','apt5','apt6','apt7',
     'insp0','insp1','insp2','insp3','insp4','insp5','insp6','insp7',
@@ -1435,7 +1682,7 @@ async function buildViewUrl(data) {
 // ── Modo Vista: carga datos en solo lectura y muestra panel de PDF ──
 function initViewMode(encoded) {
   // Decodificar datos compactos (array de valores en orden fijo de VKEYS)
-  const VKEYS = ['fecha','horaSalida','nombreConductor','placa','numLicencia','marcaModelo','categoriaLicencia','vigenciaLicencia','kmInicial','numPasajeros','telEmergencia','propositoViaje','geoField','doc1','doc2','doc3','doc4','doc5','doc6','apt1','apt2','apt3','apt4','apt5','apt6','apt7','insp0','insp1','insp2','insp3','insp4','insp5','insp6','insp7','insp8','insp9','insp10','insp11','insp12','insp13','insp14','insp15','velConfirm','hallazgoM','reporteHSE','accionCorrectiva','autorizadoOperar','cedulaConductor','fechaFirmaConductor','horaFirmaConductor','_waypoints','_folderName'];
+  const VKEYS = ['fecha','horaSalida','nombreConductor','placa','marcaModelo','categoriaLicencia','vigenciaLicencia','categoriaLicencia2','vigenciaLicencia2','categoriaLicencia3','vigenciaLicencia3','kmInicial','numPasajeros','telEmergencia','propositoViaje','geoField','cargoConductor','cedulaConductor','fechaNacimiento','rhConductor','doc1','doc2','doc3','doc4','doc5','doc6','apt1','apt2','apt3','apt4','apt5','apt6','apt7','insp0','insp1','insp2','insp3','insp4','insp5','insp6','insp7','insp8','insp9','insp10','insp11','insp12','insp13','insp14','insp15','velConfirm','hallazgoM','reporteHSE','accionCorrectiva','autorizadoOperar','fechaFirmaConductor','horaFirmaConductor','_waypoints','_folderName'];
   let data = {};
   try {
     const raw = JSON.parse(decodeURIComponent(escape(atob(encoded))));
@@ -1476,12 +1723,17 @@ function initViewMode(encoded) {
       <div style="font-size:13px;opacity:0.85;margin-top:6px">${data.fecha||''} · ${data.horaSalida||''} · ${(data.nombreConductor||'').toUpperCase()} · ${(data.placa||'').toUpperCase()}</div>
     </div>
     ${section('① Datos Generales', [
-      ['Conductor',data.nombreConductor],['Placa',data.placa],
+      ['Conductor',data.nombreConductor],['Cargo',data.cargoConductor],
+      ['Placa',data.placa],
       ['Fecha',data.fecha],['Hora Salida',data.horaSalida],
-      ['N° Licencia',data.numLicencia],['Marca/Modelo',data.marcaModelo],
-      ['Categoría Licencia',data.categoriaLicencia],['Vigencia Licencia',data.vigenciaLicencia],
+      ['N° Documento',data.cedulaConductor],['Fecha Nacimiento',data.fechaNacimiento],
+      ['RH',data.rhConductor],['N° Licencia',data.numLicencia],
+      ['Categoría 1',data.categoriaLicencia],['Vigencia 1',data.vigenciaLicencia],
+      ['Categoría 2',data.categoriaLicencia2],['Vigencia 2',data.vigenciaLicencia2],
+      ['Categoría 3',data.categoriaLicencia3],['Vigencia 3',data.vigenciaLicencia3],
+      ['N° Celular',data.telEmergencia],['Marca/Modelo',data.marcaModelo],
       ['Km Inicial',data.kmInicial],['N° Pasajeros',data.numPasajeros],
-      ['Tel. Emergencia',data.telEmergencia],['Propósito',data.propositoViaje],
+      ['Propósito',data.propositoViaje],
       ['Geolocalización',data.geoField],['Ruta',wpts]
     ])}
     ${section('② Documentación', [
@@ -2037,13 +2289,15 @@ function validateSection(idx) {
     req('horaSalida',     'Hora de salida');
     req('nombreConductor','Nombre del conductor');
     req('placa',          'Placa del vehículo');
-    req('numLicencia',    'N° de licencia');
     req('marcaModelo',    'Marca / Modelo');
-    req('categoriaLicencia','Categoría de la licencia');
-    req('vigenciaLicencia',  'Vigencia de la licencia');
+    req('categoriaLicencia', 'Categoría 1 de la licencia');
+    req('vigenciaLicencia',  'Vigencia de la categoría 1');
     req('kmInicial',      'Km inicial');
     req('numPasajeros',   'N° de pasajeros');
-    req('telEmergencia',  'Tel. emergencia empresa');
+    req('cargoConductor',   'Cargo del conductor');
+    req('fechaNacimiento',   'Fecha de nacimiento');
+    req('rhConductor',       'RH del conductor');
+    req('telEmergencia',     'N° Celular del conductor');
     req('propositoViaje', 'Propósito del viaje');
     req('geoField',       'Geolocalización (presiona el botón 📍)');
     if (waypoints.length === 0) errors.push('Ruta / Destino (agrega al menos un punto)');
@@ -2421,11 +2675,41 @@ async function submitForm() {
       body: JSON.stringify(data),
     });
     localStorage.removeItem('skanhawk_draft');
+
+    // Guardar conductor nuevo si no estaba en la lista
+    const conductorExiste = _conductores.some(c => c.nombre.toLowerCase() === (data.nombreConductor||'').toLowerCase());
+    if (!conductorExiste && data.nombreConductor) {
+      const newC = {
+        nombre: data.nombreConductor, cargo: data.cargoConductor||'',
+        documento: data.cedulaConductor||'', fechaNac: data.fechaNacimiento||'',
+        rh: data.rhConductor||'',
+        categoria: data.categoriaLicencia||'', vigencia: data.vigenciaLicencia||'',
+        categoria2: data.categoriaLicencia2||'', vigencia2: data.vigenciaLicencia2||'',
+        categoria3: data.categoriaLicencia3||'', vigencia3: data.vigenciaLicencia3||'',
+        celular: data.telEmergencia||''
+      };
+      _conductores.push(newC);
+      fetch(CONFIG.APPS_SCRIPT_URL, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action: 'saveConductor', conductor: newC })
+      });
+    }
+
+    // Guardar vehículo nuevo si no estaba en la lista
+    const vehiculoExiste = _vehiculos.some(v => v.placa.toUpperCase() === (data.placa||'').toUpperCase());
+    if (!vehiculoExiste && data.placa) {
+      const newV = { placa: data.placa.toUpperCase(), marcaModelo: data.marcaModelo||'' };
+      _vehiculos.push(newV);
+      fetch(CONFIG.APPS_SCRIPT_URL, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action: 'saveVehiculo', vehiculo: newV })
+      });
+    }
+
     setUploadProgress(20, 'Datos registrados ✓ Subiendo archivos...', 'Preparando archivos para Drive');
-
-    // Step 2: Upload files with progress (user must wait)
     await uploadFilesInBackground(data.folderName);
-
     hideUploadOverlay();
     showSuccessScreen(data.folderName, false);
   } catch (err) {
