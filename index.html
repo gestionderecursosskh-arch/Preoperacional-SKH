@@ -1447,8 +1447,8 @@ const CONFIG = {
 // "Actualizar datos" en el Apps Script (ver instrucciones)
 // ÚLTIMA ACTUALIZACIÓN: ver timestamp en los datos
 // ─────────────────────────────────────────────────────────────
-let _conductores = [{"nombre":"Cristian Steeven Sanchez Martinez","cargo":"Técnico de soporte II","documento":"1125764284","fechaNac":"2003-11-02","rh":"A+","categoria":"A2","vigencia":"2033-05-15","categoria2":"B1","vigencia2":"2033-05-15","categoria3":"C1","vigencia3":"2026-06-15","celular":"315 3762578"},{"nombre":"Darwin Fabian Corzo Sechagua","cargo":"Auxiliar Técnico de Soporte","documento":"1006780037","fechaNac":"2000-04-22","rh":"A+","categoria":"A2","vigencia":"2030-01-13","categoria2":"B1","vigencia2":"2030-03-04","categoria3":"","vigencia3":"","celular":"314 3288572"},{"nombre":"Edgar Andres Useda Rojas","cargo":"Supervisor de Soporte y Operaciones","documento":"1096232116","fechaNac":"1995-02-28","rh":"O+","categoria":"A2","vigencia":"2033-04-04","categoria2":"B1","vigencia2":"2028-02-28","categoria3":"","vigencia3":"","celular":"301 7884603"},{"nombre":"John David Ardila Martinez","cargo":"Tecnico de campo soporte en automatizacion","documento":"1006409395","fechaNac":"2003-04-23","rh":"O+","categoria":"","vigencia":"","categoria2":"","vigencia2":"","categoria3":"","vigencia3":"","celular":"317 3892267"},{"nombre":"Kleiner Jose Clavijo Beleño","cargo":"Auxiliar Técnico de Soporte","documento":"1005370937","fechaNac":"2002-04-10","rh":"A+","categoria":"A2","vigencia":"2032-04-29","categoria2":"B1","vigencia2":"2032-04-29","categoria3":"","vigencia3":"","celular":"300 4931799"},{"nombre":"Luis Fernando Gomez Castaño","cargo":"Técnico Soporte II","documento":"8418514","fechaNac":"1977-03-26","rh":"A+","categoria":"A2","vigencia":"2023-10-25","categoria2":"B1","vigencia2":"2027-06-22","categoria3":"","vigencia3":"","celular":"320 4772985"},{"nombre":"Miller Stiven Castellanos Pardo","cargo":"Técnico Soporte II","documento":"1023919578","fechaNac":"1992-09-25","rh":"AB+","categoria":"A2","vigencia":"2032-11-17","categoria2":"B1","vigencia2":"2036-02-02","categoria3":"C1","vigencia3":"2029-02-02","celular":"323 3719481"}]; // 7 conductores — actualizado 2026-04-27 10:24
-let _vehiculos   = [{"placa":"KSQ711","marcaModelo":"Renault Alazca / Modelo 2022"},{"placa":"NGK309","marcaModelo":"Ford Ranger / Modelo 2024"},{"placa":"RZH691","marcaModelo":"Ford Ranger / Modelo 2010"}]; // 3 vehículos — actualizado 2026-04-27 10:24
+let _conductores = [{"nombre":"Cristian Steeven Sanchez Martinez","cargo":"Técnico de soporte II","documento":"1125764284","fechaNac":"2003-11-02","rh":"A+","categoria":"A2","vigencia":"2033-05-15","categoria2":"B1","vigencia2":"2033-05-15","categoria3":"C1","vigencia3":"2026-06-15","celular":"315 3762578"},{"nombre":"Darwin Fabian Corzo Sechagua","cargo":"Auxiliar Técnico de Soporte","documento":"1006780037","fechaNac":"2000-04-22","rh":"A+","categoria":"A2","vigencia":"2030-01-13","categoria2":"B1","vigencia2":"2030-03-04","categoria3":"","vigencia3":"","celular":"314 3288572"},{"nombre":"Edgar Andres Useda Rojas","cargo":"Supervisor de Soporte y Operaciones","documento":"1096232116","fechaNac":"1995-02-28","rh":"O+","categoria":"A2","vigencia":"2033-04-04","categoria2":"B1","vigencia2":"2028-02-28","categoria3":"","vigencia3":"","celular":"301 7884603"},{"nombre":"John David Ardila Martinez","cargo":"Tecnico de campo soporte en automatizacion","documento":"1006409395","fechaNac":"2003-04-23","rh":"O+","categoria":"","vigencia":"","categoria2":"","vigencia2":"","categoria3":"","vigencia3":"","celular":"317 3892267"},{"nombre":"Kleiner Jose Clavijo Beleño","cargo":"Auxiliar Técnico de Soporte","documento":"1005370937","fechaNac":"2002-04-10","rh":"A+","categoria":"A2","vigencia":"2032-04-29","categoria2":"B1","vigencia2":"2032-04-29","categoria3":"","vigencia3":"","celular":"300 4931799"},{"nombre":"Luis Fernando Gomez Castaño","cargo":"Técnico Soporte II","documento":"8418514","fechaNac":"1977-03-26","rh":"A+","categoria":"A2","vigencia":"2023-10-25","categoria2":"B1","vigencia2":"2027-06-22","categoria3":"","vigencia3":"","celular":"320 4772985"},{"nombre":"Miller Stiven Castellanos Pardo","cargo":"Técnico Soporte II","documento":"1023919578","fechaNac":"1992-09-25","rh":"AB+","categoria":"A2","vigencia":"2032-11-17","categoria2":"B1","vigencia2":"2036-02-02","categoria3":"C1","vigencia3":"2029-02-02","celular":"323 3719481"}]; // 7 conductores — actualizado 2026-04-27 10:54
+let _vehiculos   = [{"placa":"KSQ711","marcaModelo":"Renault Alazca / Modelo 2022"},{"placa":"NGK309","marcaModelo":"Ford Ranger / Modelo 2024"},{"placa":"RZH691","marcaModelo":"Ford Ranger / Modelo 2010"}]; // 3 vehículos — actualizado 2026-04-27 10:54
 
 function loadMasterData() {
   // Los datos ya están embebidos en el HTML — no se necesita llamada externa
@@ -1503,15 +1503,14 @@ function toggleDropdownPlaca() {
 
 function filterConductorList(val) {
   const dd = document.getElementById('conductorDropdown');
-  const q  = val.trim().toLowerCase();
-  if (!q) { dd.style.display = 'none'; return; }
-  const matches = _conductores.filter(c => c.nombre.toLowerCase().includes(q));
+  const q  = (val||'').trim().toLowerCase();
+  const matches = q ? _conductores.filter(c => c.nombre.toLowerCase().includes(q)) : _conductores;
   if (!matches.length) { dd.style.display = 'none'; return; }
   dd.innerHTML = matches.map(c => `
-    <div onclick="selectConductor('${c.nombre.replace(/'/g,"\\'")}');event.stopPropagation()"
+    <div onclick="selectConductor('${c.nombre.replace(/'/g,"\'")}');event.stopPropagation()"
       style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0"
       onmousedown="event.preventDefault()">
-      ${c.nombre} <span style="font-size:11px;color:#aaa">· ${c.documento||''}</span>
+      ${c.nombre} <span style="font-size:11px;color:#aaa">· ${c.cargo||''}</span>
     </div>`).join('');
   dd.style.display = 'block';
 }
@@ -1543,20 +1542,18 @@ function onConductorChange(val) {
 // ── Dropdown placa ───────────────────────────────────────────
 function filterPlacaList(val) {
   const dd = document.getElementById('placaDropdown');
-  const q  = val.trim().toUpperCase();
-  document.getElementById('placa').value = q;
-  if (!q) { dd.style.display = 'none'; return; }
-  const matches = _vehiculos.filter(v => v.placa.toUpperCase().includes(q));
+  const q  = (val||'').trim().toUpperCase();
+  if (q) document.getElementById('placa').value = q;
+  const matches = q ? _vehiculos.filter(v => v.placa.toUpperCase().includes(q)) : _vehiculos;
   if (!matches.length) { dd.style.display = 'none'; return; }
   dd.innerHTML = matches.map(v => `
-    <div onclick="selectPlaca('${v.placa.replace(/'/g,"\\'")}');event.stopPropagation()"
+    <div onclick="selectPlaca('${v.placa.replace(/'/g,"\'")}');event.stopPropagation()"
       style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0"
       onmousedown="event.preventDefault()">
       ${v.placa} <span style="font-size:11px;color:#aaa">· ${v.marcaModelo||''}</span>
     </div>`).join('');
   dd.style.display = 'block';
 }
-
 function selectPlaca(placa) {
   const v = _vehiculos.find(x => x.placa.toUpperCase() === placa.toUpperCase());
   if (!v) return;
