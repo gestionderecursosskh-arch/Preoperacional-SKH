@@ -1433,39 +1433,17 @@ const CONFIG = {
 // ═══════════════════════════════════════════
 // DATOS MAESTROS — cargados desde Apps Script
 // ═══════════════════════════════════════════
-let _conductores = []; // [{nombre, documento, fechaNac, rh, licencia, categoria, vigencia, celular}]
-let _vehiculos   = []; // [{placa, marcaModelo}]
+// ── DATOS MAESTROS EMBEBIDOS ────────────────────────────────
+// Estos datos se cargan desde el Sheet mediante el botón
+// "Actualizar datos" en el Apps Script (ver instrucciones)
+// ÚLTIMA ACTUALIZACIÓN: ver timestamp en los datos
+// ─────────────────────────────────────────────────────────────
+let _conductores = [{"nombre":"Cristian Steeven Sanchez Martinez","cargo":"Técnico de soporte II","documento":"1125764284","fechaNac":"2003-11-02","rh":"A+","categoria":"A2","vigencia":"2033-05-15","categoria2":"B1","vigencia2":"2033-05-15","categoria3":"C1","vigencia3":"2026-06-15","celular":"315 3762578"},{"nombre":"Darwin Fabian Corzo Sechagua","cargo":"Auxiliar Técnico de Soporte","documento":"1006780037","fechaNac":"2000-04-22","rh":"A+","categoria":"A2","vigencia":"2030-01-13","categoria2":"B1","vigencia2":"2030-03-04","categoria3":"","vigencia3":"","celular":"314 3288572"},{"nombre":"Edgar Andres Useda Rojas","cargo":"Supervisor de Soporte y Operaciones","documento":"1096232116","fechaNac":"1995-02-28","rh":"O+","categoria":"A2","vigencia":"2023-03-20","categoria2":"B1","vigencia2":"2028-02-28","categoria3":"C1","vigencia3":"","celular":"301 7884603"},{"nombre":"John David Ardila Martinez","cargo":"Tecnico de campo soporte en automatizacion","documento":"1006409395","fechaNac":"2003-04-23","rh":"O+","categoria":"","vigencia":"","categoria2":"","vigencia2":"","categoria3":"","vigencia3":"","celular":"317 3892267"},{"nombre":"Kleiner Jose Clavijo Beleño","cargo":"Auxiliar Técnico de Soporte","documento":"1005370937","fechaNac":"2002-04-10","rh":"A+","categoria":"A2","vigencia":"2032-04-29","categoria2":"B1","vigencia2":"2032-04-29","categoria3":"","vigencia3":"","celular":"300 4931799"},{"nombre":"Luis Fernando Gomez Castaño","cargo":"Técnico Soporte II","documento":"8418514","fechaNac":"1977-03-26","rh":"A+","categoria":"A2","vigencia":"2023-10-25","categoria2":"B1","vigencia2":"2027-06-22","categoria3":"","vigencia3":"","celular":"320 4772985"},{"nombre":"Miller Stiven Castellanos Pardo","cargo":"Técnico Soporte II","documento":"1023919578","fechaNac":"1992-09-25","rh":"AB+","categoria":"A2","vigencia":"2032-11-17","categoria2":"B1","vigencia2":"2032-06-24","categoria3":"C1","vigencia3":"2025-06-24","celular":"323 3719481"}]; // 7 conductores — actualizado 2026-04-27 09:53
+let _vehiculos   = []; // 0 vehículos — actualizado 2026-04-27 09:53
 
-async function loadMasterData() {
-  if (!CONFIG.APPS_SCRIPT_URL) return;
-  return new Promise(resolve => {
-    // JSONP bypasa CORS completamente — el redirect de Apps Script no es un problema
-    const cbName = '_skh_cb_' + Date.now();
-    let done = false;
-
-    window[cbName] = function(data) {
-      done = true;
-      if (Array.isArray(data.conductores)) _conductores = data.conductores;
-      if (Array.isArray(data.vehiculos))   _vehiculos   = data.vehiculos;
-      cleanup();
-      resolve();
-    };
-
-    const script = document.createElement('script');
-    script.src = CONFIG.APPS_SCRIPT_URL + '?action=getMasterData&callback=' + cbName;
-    script.onerror = () => { cleanup(); resolve(); };
-
-    // Timeout de 10 segundos
-    const t = setTimeout(() => { if (!done) { cleanup(); resolve(); } }, 10000);
-
-    function cleanup() {
-      clearTimeout(t);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-    }
-
-    document.head.appendChild(script);
-  });
+function loadMasterData() {
+  // Los datos ya están embebidos en el HTML — no se necesita llamada externa
+  // Para actualizar: Apps Script → ejecutar "exportarHTML" → subir a GitHub Pages
 }
 
 // ── Dropdown conductor ───────────────────────────────────────
