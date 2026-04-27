@@ -847,13 +847,9 @@
             <div style="position:relative">
               <input type="text" id="nombreConductor" placeholder="Selecciona o escribe nombre completo"
                 autocomplete="off" required
-                style="padding-right:36px"
                 oninput="filterConductorList(this.value)"
                 onfocus="filterConductorList(this.value)">
-              <span onclick="event.stopPropagation();toggleDropdownConductor()"
-                style="position:absolute;right:10px;top:50%;transform:translateY(-50%);
-                       font-size:16px;color:var(--brand-teal);cursor:pointer;pointer-events:all;
-                       user-select:none;line-height:1;padding:4px">▾</span>
+
               <div id="conductorDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;
                 background:#fff;border:1.5px solid var(--brand-teal);border-top:none;border-radius:0 0 8px 8px;
                 max-height:180px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.12)"></div>
@@ -895,13 +891,10 @@
             <label>Placa del vehículo <span class="required">*</span></label>
             <div style="position:relative">
               <input type="text" id="placa" placeholder="Selecciona o escribe placa"
-                autocomplete="off" style="text-transform:uppercase;padding-right:36px"
+                autocomplete="off" style="text-transform:uppercase"
                 oninput="filterPlacaList(this.value)"
                 onfocus="filterPlacaList(this.value)">
-              <span onclick="event.stopPropagation();toggleDropdownPlaca()"
-                style="position:absolute;right:10px;top:50%;transform:translateY(-50%);
-                       font-size:16px;color:var(--brand-teal);cursor:pointer;pointer-events:all;
-                       user-select:none;line-height:1;padding:4px">▾</span>
+
               <div id="placaDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;
                 background:#fff;border:1.5px solid var(--brand-teal);border-top:none;border-radius:0 0 8px 8px;
                 max-height:180px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.12)"></div>
@@ -1031,7 +1024,7 @@
         <div class="card-header-icon">📋</div>
         <div>
           <div class="card-title">Documentación Legal</div>
-          <div class="card-subtitle">Verificar originales vigentes</div>
+          <div class="card-subtitle">¿El vehículo cuenta con los siguientes documentos vigentes?</div>
         </div>
       </div>
       <div class="card-body" style="padding:0">
@@ -1040,14 +1033,24 @@
             <tr>
               <th style="width:32px">#</th>
               <th>Documento</th>
-              <th class="center" style="width:100px">Vigente <span style="color:#e8620a">*</span></th>
-              <th style="width:150px">Cargar documento <span style="color:#e8620a">*</span></th>
+              <th class="center" style="width:90px">¿Vigente? <span style="color:#e8620a">*</span></th>
             </tr>
           </thead>
           <tbody id="docTableBody">
             <!-- Filled by JS -->
           </tbody>
         </table>
+
+        <!-- Nota y casilla de confirmación -->
+        <div style="padding:14px 16px;border-top:1px solid var(--border);background:var(--surface2)">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+            <input type="checkbox" id="docConfirmacion" required
+              style="margin-top:2px;width:16px;height:16px;accent-color:var(--brand-teal);flex-shrink:0">
+            <span style="font-size:11px;color:var(--text-muted);font-style:italic;line-height:1.5">
+              Confirma que los documentos del vehículo están vigentes. Los originales reposan bajo custodia del conductor y responsable HSE.
+            </span>
+          </label>
+        </div>
       </div>
     </div>
   </section>
@@ -1393,8 +1396,6 @@ const DOCS = [
   { id:'doc2', label:'SOAT (Seguro Obligatorio de Accidentes de Tránsito)' },
   { id:'doc3', label:'Revisión técnico-mecánica y de gases' },
   { id:'doc4', label:'Tarjeta de propiedad' },
-  { id:'doc5', label:'Póliza de responsabilidad civil extracontractual (si aplica)' },
-  { id:'doc6', label:'Póliza todo riesgo (si aplica)' },
 ];
 
 const APTITUD = [
@@ -1447,8 +1448,8 @@ const CONFIG = {
 // "Actualizar datos" en el Apps Script (ver instrucciones)
 // ÚLTIMA ACTUALIZACIÓN: ver timestamp en los datos
 // ─────────────────────────────────────────────────────────────
-let _conductores = [{"nombre":"Cristian Steeven Sanchez Martinez","cargo":"Técnico de soporte II","documento":"1125764284","fechaNac":"2003-11-02","rh":"A+","categoria":"A2","vigencia":"2033-05-15","categoria2":"B1","vigencia2":"2033-05-15","categoria3":"C1","vigencia3":"2026-06-15","celular":"315 3762578"},{"nombre":"Darwin Fabian Corzo Sechagua","cargo":"Auxiliar Técnico de Soporte","documento":"1006780037","fechaNac":"2000-04-22","rh":"A+","categoria":"A2","vigencia":"2030-01-13","categoria2":"B1","vigencia2":"2030-03-04","categoria3":"","vigencia3":"","celular":"314 3288572"},{"nombre":"Edgar Andres Useda Rojas","cargo":"Supervisor de Soporte y Operaciones","documento":"1096232116","fechaNac":"1995-02-28","rh":"O+","categoria":"A2","vigencia":"2033-04-04","categoria2":"B1","vigencia2":"2028-02-28","categoria3":"","vigencia3":"","celular":"301 7884603"},{"nombre":"John David Ardila Martinez","cargo":"Tecnico de campo soporte en automatizacion","documento":"1006409395","fechaNac":"2003-04-23","rh":"O+","categoria":"","vigencia":"","categoria2":"","vigencia2":"","categoria3":"","vigencia3":"","celular":"317 3892267"},{"nombre":"Kleiner Jose Clavijo Beleño","cargo":"Auxiliar Técnico de Soporte","documento":"1005370937","fechaNac":"2002-04-10","rh":"A+","categoria":"A2","vigencia":"2032-04-29","categoria2":"B1","vigencia2":"2032-04-29","categoria3":"","vigencia3":"","celular":"300 4931799"},{"nombre":"Luis Fernando Gomez Castaño","cargo":"Técnico Soporte II","documento":"8418514","fechaNac":"1977-03-26","rh":"A+","categoria":"A2","vigencia":"2023-10-25","categoria2":"B1","vigencia2":"2027-06-22","categoria3":"","vigencia3":"","celular":"320 4772985"},{"nombre":"Miller Stiven Castellanos Pardo","cargo":"Técnico Soporte II","documento":"1023919578","fechaNac":"1992-09-25","rh":"AB+","categoria":"A2","vigencia":"2032-11-17","categoria2":"B1","vigencia2":"2036-02-02","categoria3":"C1","vigencia3":"2029-02-02","celular":"323 3719481"}]; // 7 conductores — actualizado 2026-04-27 10:54
-let _vehiculos   = [{"placa":"KSQ711","marcaModelo":"Renault Alazca / Modelo 2022"},{"placa":"NGK309","marcaModelo":"Ford Ranger / Modelo 2024"},{"placa":"RZH691","marcaModelo":"Ford Ranger / Modelo 2010"}]; // 3 vehículos — actualizado 2026-04-27 10:54
+let _conductores = [{"nombre":"Cristian Steeven Sanchez Martinez","cargo":"Técnico de soporte II","documento":"1125764284","fechaNac":"2003-11-02","rh":"A+","categoria":"A2","vigencia":"2033-05-15","categoria2":"B1","vigencia2":"2033-05-15","categoria3":"C1","vigencia3":"2026-06-15","celular":"315 3762578"},{"nombre":"Darwin Fabian Corzo Sechagua","cargo":"Auxiliar Técnico de Soporte","documento":"1006780037","fechaNac":"2000-04-22","rh":"A+","categoria":"A2","vigencia":"2030-01-13","categoria2":"B1","vigencia2":"2030-03-04","categoria3":"","vigencia3":"","celular":"314 3288572"},{"nombre":"Edgar Andres Useda Rojas","cargo":"Supervisor de Soporte y Operaciones","documento":"1096232116","fechaNac":"1995-02-28","rh":"O+","categoria":"A2","vigencia":"2033-04-04","categoria2":"B1","vigencia2":"2028-02-28","categoria3":"","vigencia3":"","celular":"301 7884603"},{"nombre":"John David Ardila Martinez","cargo":"Tecnico de campo soporte en automatizacion","documento":"1006409395","fechaNac":"2003-04-23","rh":"O+","categoria":"","vigencia":"","categoria2":"","vigencia2":"","categoria3":"","vigencia3":"","celular":"317 3892267"},{"nombre":"Kleiner Jose Clavijo Beleño","cargo":"Auxiliar Técnico de Soporte","documento":"1005370937","fechaNac":"2002-04-10","rh":"A+","categoria":"A2","vigencia":"2032-04-29","categoria2":"B1","vigencia2":"2032-04-29","categoria3":"","vigencia3":"","celular":"300 4931799"},{"nombre":"Luis Fernando Gomez Castaño","cargo":"Técnico Soporte II","documento":"8418514","fechaNac":"1977-03-26","rh":"A+","categoria":"A2","vigencia":"2023-10-25","categoria2":"B1","vigencia2":"2027-06-22","categoria3":"","vigencia3":"","celular":"320 4772985"},{"nombre":"Miller Stiven Castellanos Pardo","cargo":"Técnico Soporte II","documento":"1023919578","fechaNac":"1992-09-25","rh":"AB+","categoria":"A2","vigencia":"2032-11-17","categoria2":"B1","vigencia2":"2036-02-02","categoria3":"C1","vigencia3":"2029-02-02","celular":"323 3719481"}]; // 7 conductores — actualizado 2026-04-27 14:18
+let _vehiculos   = [{"placa":"KSQ711","marcaModelo":"Renault Alazca / Modelo 2022"},{"placa":"NGK309","marcaModelo":"Ford Ranger / Modelo 2024"},{"placa":"RZH691","marcaModelo":"Ford Ranger / Modelo 2010"}]; // 3 vehículos — actualizado 2026-04-27 14:18
 
 function loadMasterData() {
   // Los datos ya están embebidos en el HTML — no se necesita llamada externa
@@ -1710,7 +1711,7 @@ async function buildViewUrl(data) {
     'categoriaLicencia','vigenciaLicencia','categoriaLicencia2','vigenciaLicencia2','categoriaLicencia3','vigenciaLicencia3','kmInicial','numPasajeros',
     'telEmergencia','propositoViaje','geoField',
     'cargoConductor','cedulaConductor','fechaNacimiento','rhConductor',
-    'doc1','doc2','doc3','doc4','doc5','doc6',
+    'doc1','doc2','doc3','doc4',
     'apt1','apt2','apt3','apt4','apt5','apt6','apt7',
     'insp0','insp1','insp2','insp3','insp4','insp5','insp6','insp7',
     'insp8','insp9','insp10','insp11','insp12','insp13','insp14','insp15',
@@ -1735,7 +1736,7 @@ async function buildViewUrl(data) {
 // ── Modo Vista: carga datos en solo lectura y muestra panel de PDF ──
 function initViewMode(encoded) {
   // Decodificar datos compactos (array de valores en orden fijo de VKEYS)
-  const VKEYS = ['fecha','horaSalida','nombreConductor','placa','marcaModelo','categoriaLicencia','vigenciaLicencia','categoriaLicencia2','vigenciaLicencia2','categoriaLicencia3','vigenciaLicencia3','kmInicial','numPasajeros','telEmergencia','propositoViaje','geoField','cargoConductor','cedulaConductor','fechaNacimiento','rhConductor','doc1','doc2','doc3','doc4','doc5','doc6','apt1','apt2','apt3','apt4','apt5','apt6','apt7','insp0','insp1','insp2','insp3','insp4','insp5','insp6','insp7','insp8','insp9','insp10','insp11','insp12','insp13','insp14','insp15','velConfirm','hallazgoM','reporteHSE','accionCorrectiva','autorizadoOperar','fechaFirmaConductor','horaFirmaConductor','_waypoints','_folderName'];
+  const VKEYS = ['fecha','horaSalida','nombreConductor','placa','marcaModelo','categoriaLicencia','vigenciaLicencia','categoriaLicencia2','vigenciaLicencia2','categoriaLicencia3','vigenciaLicencia3','kmInicial','numPasajeros','telEmergencia','propositoViaje','geoField','cargoConductor','cedulaConductor','fechaNacimiento','rhConductor','doc1','doc2','doc3','doc4','apt1','apt2','apt3','apt4','apt5','apt6','apt7','insp0','insp1','insp2','insp3','insp4','insp5','insp6','insp7','insp8','insp9','insp10','insp11','insp12','insp13','insp14','insp15','velConfirm','hallazgoM','reporteHSE','accionCorrectiva','autorizadoOperar','fechaFirmaConductor','horaFirmaConductor','_waypoints','_folderName'];
   let data = {};
   try {
     const raw = JSON.parse(decodeURIComponent(escape(atob(encoded))));
@@ -1791,8 +1792,7 @@ function initViewMode(encoded) {
     ])}
     ${section('② Documentación', [
       ['Licencia de conducción',data.doc1],['SOAT',data.doc2],
-      ['Tecno-mecánica',data.doc3],['Tarjeta de propiedad',data.doc4],
-      ['Póliza RC',data.doc5],['Póliza todo riesgo',data.doc6]
+      ['Tecno-mecánica',data.doc3],['Tarjeta de propiedad',data.doc4]
     ])}
     ${section('③ Aptitud', [
       ['Descansó 6-8 horas',data.apt1],['Condiciones físicas/mentales',data.apt2],
@@ -1890,12 +1890,6 @@ function buildDocTable() {
             <input type="radio" name="${d.id}" id="${d.id}_no" value="NO">
             <label for="${d.id}_no">NO</label>
           </div>
-        </td>
-        <td>
-          <label for="${d.id}_file" style="display:flex;align-items:center;gap:6px;padding:7px 10px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;color:var(--text-muted);background:var(--surface2);transition:all 0.2s" id="${d.id}_file_label">
-            <input type="file" id="${d.id}_file" accept=".pdf,image/*" style="display:none" onchange="handleDocFile(this,'${d.id}')">
-            📎 Adjuntar
-          </label>
         </td>
       </tr>`;
   });
@@ -2361,18 +2355,13 @@ function validateSection(idx) {
       'Licencia de conducción',
       'SOAT',
       'Revisión técnico-mecánica',
-      'Tarjeta de propiedad',
-      'Póliza RC extracontractual (si aplica)',
-      'Póliza todo riesgo (si aplica)'
+      'Tarjeta de propiedad'
     ];
-    ['doc1','doc2','doc3','doc4','doc5','doc6'].forEach((id, i) => {
-      const opcional = (i === 4 || i === 5); // doc5 y doc6 son opcionales
-      if (!opcional) {
-        reqRadio(id, docNames[i] + ': indica si está Vigente (SÍ/NO)');
-        const hasFile = uploadedFiles.docs && uploadedFiles.docs[id];
-        if (!hasFile) errors.push(docNames[i] + ': adjunta el documento');
-      }
+    ['doc1','doc2','doc3','doc4'].forEach((id, i) => {
+      reqRadio(id, docNames[i] + ': confirma si está vigente (SÍ/NO)');
     });
+    const cb = document.getElementById('docConfirmacion');
+    if (!cb || !cb.checked) errors.push('Confirma que los documentos del vehículo están vigentes (casilla al final de la sección)');
   }
 
   if (idx === 2) {
@@ -2589,7 +2578,7 @@ async function uploadFilesInBackground(folderName) {
   if (!url || !navigator.onLine) return;
 
   const files = [];
-  const docLabels   = { doc1:'Licencia_Conduccion', doc2:'SOAT', doc3:'Tecno_Mecanica', doc4:'Tarjeta_Propiedad', doc5:'Poliza_RC', doc6:'Poliza_Todo_Riesgo' };
+  const docLabels   = { doc1:'Licencia_Conduccion', doc2:'SOAT', doc3:'Tecno_Mecanica', doc4:'Tarjeta_Propiedad' };
   const photoLabels = { front:'Foto_Delantera', back:'Foto_Trasera', left:'Foto_Lateral_Izquierdo', right:'Foto_Lateral_Derecho' };
 
   if (uploadedFiles.docs) {
